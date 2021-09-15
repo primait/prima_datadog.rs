@@ -67,26 +67,3 @@ impl From<&Configuration> for dogstatsd::Options {
         )
     }
 }
-
-/// Represent an environment in which the datadog client is running.
-/// This is useful for enforcing rules based on environment for every application that uses the library.
-pub enum Environment {
-    Local,
-    Qa,
-    Staging,
-    Production,
-}
-
-impl FromStr for Environment {
-    type Err = Error;
-
-    fn from_str(s: &str) -> PrimaDatadogResult<Self> {
-        match s {
-            "local" => Ok(Self::Local),
-            "qa" => Ok(Self::Qa),
-            "staging" => Ok(Self::Staging),
-            "production" => Ok(Self::Production),
-            _ => Err(Error::WrongEnvironmentDefinition),
-        }
-    }
-}
