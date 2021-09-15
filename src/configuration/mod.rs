@@ -6,6 +6,7 @@ pub trait Configuration {
     fn from_addr(&self) -> &str;
     fn namespace(&self) -> &str;
     fn is_reporting_enabled(&self) -> bool;
+    fn default_tags(&self) -> Vec<String>;
 }
 
 impl Configuration for dogstatsd::Options {
@@ -22,6 +23,10 @@ impl Configuration for dogstatsd::Options {
     }
 
     fn is_reporting_enabled(&self) -> bool {
-        todo!()
+        true
+    }
+
+    fn default_tags(&self) -> Vec<String> {
+        vec![]
     }
 }

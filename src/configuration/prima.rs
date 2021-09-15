@@ -48,12 +48,16 @@ impl Configuration for PrimaConfiguration {
             _ => true,
         }
     }
+
+    fn default_tags(&self) -> Vec<String> {
+        vec![format!("env:{}", self.environment.to_string())]
+    }
 }
 
 /// Represent an environment in which the datadog client is running.
 /// This is useful for enforcing rules based on environment for every application that uses the library.
 pub enum Environment {
-    Local,
+    Dev,
     Qa,
     Staging,
     Production,
@@ -64,11 +68,22 @@ impl FromStr for Environment {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "local" => Ok(Self::Local),
+            "dev" => Ok(Self::Dev),
             "qa" => Ok(Self::Qa),
             "staging" => Ok(Self::Staging),
             "production" => Ok(Self::Production),
             _ => Err(PrimaDatadogError::WrongEnvironmentDefinition),
+        }
+    }
+}
+
+impl ToString for Environment {
+    fn to_string(&self) -> String {
+        match self {
+            Environment::Dev => "dev".to_string(),
+            Environment::Qa => "qa".to_string(),
+            Environment::Staging => "staging".to_string(),
+            Environment::Production => "production".to_string(),
         }
     }
 }
