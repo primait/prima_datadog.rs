@@ -43,10 +43,7 @@ impl Configuration for PrimaConfiguration {
     }
 
     fn is_reporting_enabled(&self) -> bool {
-        match self.environment {
-            Environment::Qa => false,
-            _ => true,
-        }
+        self.environment != Environment::Qa
     }
 
     fn default_tags(&self) -> Vec<String> {
@@ -56,6 +53,7 @@ impl Configuration for PrimaConfiguration {
 
 /// Represent an environment in which the datadog client is running.
 /// This is useful for enforcing rules based on environment for every application that uses the library.
+#[derive(PartialEq)]
 pub enum Environment {
     Dev,
     Qa,
