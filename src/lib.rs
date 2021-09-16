@@ -1,8 +1,7 @@
-use once_cell::sync::OnceCell;
-
 use crate::client::DogstatsdClient;
 use crate::configuration::Configuration;
 use crate::error::Error;
+use once_cell::sync::OnceCell;
 
 mod client;
 pub mod configuration;
@@ -26,19 +25,25 @@ impl Datadog {
             configuration.to_addr(),
             configuration.namespace(),
         );
-        INSTANCE
-            .set(Self {
-                client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
-                is_reporting_enabled: configuration.is_reporting_enabled(),
-                default_tags: vec![],
-            })
-            .map_err(|_| Error::OnceCell)?;
+        let datadog_instance = Self {
+            client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
+            is_reporting_enabled: configuration.is_reporting_enabled(),
+            default_tags: vec![],
+        };
+
+        INSTANCE.get_or_init(|| datadog_instance);
 
         Ok(())
     }
 
-    pub fn global() -> &'static Datadog {
-        INSTANCE.get().expect("Datadog is not initialized")
+    pub fn current() -> &'static Datadog {
+        INSTANCE.get().expect("Datadog not initialized")
+    }
+
+    pub fn incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        dbg!(&tags);
+        self.client.incr(metric.as_ref(), tags);
     }
 }
 
@@ -71,10 +76,10 @@ impl DogstatsdClient for Datadog {
 #[macro_export]
 macro_rules! incr {
     ($stat:literal) => {
-        $crate::Datadog::global().incr($stat, vec![]);
+        $crate::Datadog::current().incr($stat, vec![]);
     };
     ($stat:path) => {
-        $crate::Datadog::global().incr($stat.as_ref(), vec![]);
+        $crate::Datadog::current().incr($stat.as_ref(), vec![]);
     };
     ($stat:literal; $( $key:expr => $value:expr ), *) => {
         let tags = std::vec![
@@ -82,7 +87,7 @@ macro_rules! incr {
                 std::format!("{}:{}", $key, $value)
             ), *
         ];
-        $crate::Datadog::global().incr($stat, tags.into_iter());
+        $crate::Datadog::current().incr($stat, tags);
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
         let tags = std::vec![
@@ -90,7 +95,7 @@ macro_rules! incr {
                 std::format!("{}:{}", $key, $value)
             ), *
         ];
-        $crate::Datadog::global().incr($stat.as_ref(), tags.into_iter());
+        $crate::Datadog::current().incr($stat.as_ref(), tags);
     };
 }
 
@@ -129,23 +134,6 @@ mod tests {
         Test1,
     }
 
-    impl Datadog {
-        pub fn for_test<C: 'static + DogstatsdClient + Send + Sync>(
-            client: C,
-            is_reporting_enabled: bool,
-            default_tags: Vec<String>,
-        ) {
-            let _ = INSTANCE
-                .set(Self {
-                    client: Box::new(client),
-                    is_reporting_enabled,
-                    default_tags,
-                })
-                .ok()
-                .unwrap();
-        }
-    }
-
     impl AsRef<str> for TestEvent {
         fn as_ref(&self) -> &str {
             match self {
@@ -154,26 +142,66 @@ mod tests {
         }
     }
 
-    #[test]
-    pub fn incr_macro_with_literal() {
+    fn incr_mock(
+        metric: &'static str,
+        tags: &'static [&str],
+    ) -> crate::client::MockDogstatsdClient {
         let mut client_mock = crate::client::MockDogstatsdClient::new();
         client_mock
             .expect_incr()
-            .with(eq("pippo"), eq(vec!["test".to_string()]))
+            .once()
+            .with(
+                eq(metric),
+                mockall::predicate::function(move |called_tags: &Vec<String>| {
+                    called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+                }),
+            )
             .return_const(());
-        Datadog::for_test(client_mock, true, vec!["test".to_string()]);
 
-        incr!("pippo");
+        client_mock
     }
 
     #[test]
-    pub fn incr_macro_with_path() {
-        let mut client_mock = crate::client::MockDogstatsdClient::new();
-        client_mock
-            .expect_incr()
-            .with(eq("test1_event"), eq(vec!["test".to_string()]))
-            .return_const(());
-        Datadog::for_test(client_mock, true, vec!["test".to_string()]);
-        incr!(TestEvent::Test1);
+    pub fn incr_with_literal() {
+        let mock = incr_mock("test", &[]);
+        Datadog {
+            client: Box::new(mock),
+            is_reporting_enabled: true,
+            default_tags: vec![],
+        }
+        .incr("test", vec![]);
+    }
+
+    #[test]
+    pub fn incr_with_type() {
+        let mock = incr_mock("test1_event", &[]);
+        Datadog {
+            client: Box::new(mock),
+            is_reporting_enabled: true,
+            default_tags: vec![],
+        }
+        .incr(TestEvent::Test1, vec![]);
+    }
+
+    #[test]
+    pub fn incr_with_literal_and_tags() {
+        let mock = incr_mock("test", &["added:tag", "test"]);
+        Datadog {
+            client: Box::new(mock),
+            is_reporting_enabled: true,
+            default_tags: vec!["test".to_string()],
+        }
+        .incr("test", vec!["added:tag".to_string()]);
+    }
+
+    #[test]
+    pub fn incr_with_type_and_tags() {
+        let mock = incr_mock("test1_event", &["added:tag", "test"]);
+        Datadog {
+            client: Box::new(mock),
+            is_reporting_enabled: true,
+            default_tags: vec!["test".to_string()],
+        }
+        .incr("test1_event", vec!["added:tag".to_string()]);
     }
 }
