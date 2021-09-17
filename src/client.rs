@@ -1,7 +1,3 @@
-#[cfg(test)]
-use mockall::automock;
-
-#[cfg_attr(test, automock)]
 pub trait DogstatsdClient {
     /// Increment a StatsD counter
     fn incr(&self, metric: &str, tags: Vec<String>);

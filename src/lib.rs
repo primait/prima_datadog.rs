@@ -3,7 +3,7 @@ use crate::configuration::Configuration;
 use crate::error::Error;
 use once_cell::sync::OnceCell;
 
-mod client;
+pub mod client;
 pub mod configuration;
 pub mod error;
 
@@ -19,6 +19,7 @@ pub struct Datadog {
 }
 
 impl Datadog {
+    /// Initializes a Datadog instance with a struct that implements the `Configuration` trait
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
         let dogstatsd_client_options = dogstatsd::Options::new(
             configuration.from_addr(),
@@ -36,172 +37,83 @@ impl Datadog {
         Ok(())
     }
 
-    pub fn current() -> &'static Datadog {
+    /// initialize a Datadog instance with bare parameters.
+    /// This should be used carefully. Use `Datadog::init` instead
+    pub fn new<'a>(
+        client: impl 'static + DogstatsdClient + Send + Sync,
+        is_reporting_enabled: bool,
+        default_tags: impl IntoIterator<Item = &'a str>,
+    ) -> Self {
+        Self {
+            client: Box::new(client),
+            is_reporting_enabled,
+            default_tags: default_tags.into_iter().map(ToString::to_string).collect(),
+        }
+    }
+
+    pub fn global() -> &'static Datadog {
         INSTANCE.get().expect("Datadog not initialized")
+    }
+
+    pub fn is_reporting_enabled(&self) -> bool {
+        self.is_reporting_enabled
     }
 
     pub fn incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
-        dbg!(&tags);
         self.client.incr(metric.as_ref(), tags);
     }
-}
 
-impl DogstatsdClient for Datadog {
-    fn incr(&self, metric: &str, tags: Vec<String>) {
-        if !self.is_reporting_enabled {
-            return;
-        }
-        let _ = self.client.incr(
-            metric,
-            tags.into_iter()
-                .chain(self.default_tags.iter().cloned())
-                .collect(),
-        );
-    }
-
-    fn decr(&self, metric: &str, tags: Vec<String>) {
-        if !self.is_reporting_enabled {
-            return;
-        }
-        let _ = self.client.decr(
-            metric,
-            tags.into_iter()
-                .chain(self.default_tags.iter().cloned())
-                .collect(),
-        );
+    pub fn decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.decr(metric.as_ref(), tags);
     }
 }
 
 #[macro_export]
 macro_rules! incr {
     ($stat:literal) => {
-        $crate::Datadog::current().incr($stat, vec![]);
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().incr($stat, vec![]);
+        }
     };
     ($stat:path) => {
-        $crate::Datadog::current().incr($stat.as_ref(), vec![]);
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().incr($stat.as_ref(), vec![]);
+        }
     };
     ($stat:literal; $( $key:expr => $value:expr ), *) => {
-        let tags = std::vec![
-            $(
-                std::format!("{}:{}", $key, $value)
-            ), *
-        ];
-        $crate::Datadog::current().incr($stat, tags);
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().incr($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
-        let tags = std::vec![
-            $(
-                std::format!("{}:{}", $key, $value)
-            ), *
-        ];
-        $crate::Datadog::current().incr($stat.as_ref(), tags);
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().incr($stat.as_ref(), std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
     };
 }
 
 #[macro_export]
 macro_rules! decr {
     ($stat:literal) => {
-        $crate::Datadog::global().decr($stat, std::iter::empty());
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().decr($stat, vec![]);
+        }
     };
     ($stat:path) => {
-        $crate::Datadog::global().decr($stat.as_ref(), std::iter::empty());
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().decr($stat.as_ref(), vec![]);
+        }
     };
     ($stat:literal; $( $key:expr => $value:expr ), *) => {
-        let tags = std::vec![
-            $(
-                std::format!("{}:{}", $key, $value)
-            ), *
-        ];
-        $crate::Datadog::global().decr($stat, tags.into_iter());
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().decr($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
-        let tags = std::vec![
-            $(
-                std::format!("{}:{}", $key, $value)
-            ), *
-        ];
-        $crate::Datadog::global().decr($stat.as_ref(), tags.into_iter());
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().decr($stat.as_ref(), std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
     };
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use mockall::predicate::*;
-
-    enum TestEvent {
-        Test1,
-    }
-
-    impl AsRef<str> for TestEvent {
-        fn as_ref(&self) -> &str {
-            match self {
-                TestEvent::Test1 => "test1_event",
-            }
-        }
-    }
-
-    fn incr_mock(
-        metric: &'static str,
-        tags: &'static [&str],
-    ) -> crate::client::MockDogstatsdClient {
-        let mut client_mock = crate::client::MockDogstatsdClient::new();
-        client_mock
-            .expect_incr()
-            .once()
-            .with(
-                eq(metric),
-                mockall::predicate::function(move |called_tags: &Vec<String>| {
-                    called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-                }),
-            )
-            .return_const(());
-
-        client_mock
-    }
-
-    #[test]
-    pub fn incr_with_literal() {
-        let mock = incr_mock("test", &[]);
-        Datadog {
-            client: Box::new(mock),
-            is_reporting_enabled: true,
-            default_tags: vec![],
-        }
-        .incr("test", vec![]);
-    }
-
-    #[test]
-    pub fn incr_with_type() {
-        let mock = incr_mock("test1_event", &[]);
-        Datadog {
-            client: Box::new(mock),
-            is_reporting_enabled: true,
-            default_tags: vec![],
-        }
-        .incr(TestEvent::Test1, vec![]);
-    }
-
-    #[test]
-    pub fn incr_with_literal_and_tags() {
-        let mock = incr_mock("test", &["added:tag", "test"]);
-        Datadog {
-            client: Box::new(mock),
-            is_reporting_enabled: true,
-            default_tags: vec!["test".to_string()],
-        }
-        .incr("test", vec!["added:tag".to_string()]);
-    }
-
-    #[test]
-    pub fn incr_with_type_and_tags() {
-        let mock = incr_mock("test1_event", &["added:tag", "test"]);
-        Datadog {
-            client: Box::new(mock),
-            is_reporting_enabled: true,
-            default_tags: vec!["test".to_string()],
-        }
-        .incr("test1_event", vec!["added:tag".to_string()]);
-    }
 }
