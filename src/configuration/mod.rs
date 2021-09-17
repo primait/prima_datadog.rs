@@ -1,6 +1,8 @@
 //! Configuration module
 
-pub mod prima;
+mod prima;
+
+pub use prima::PrimaConfiguration;
 
 /// A trait representing valid configuration entity
 pub trait Configuration {
