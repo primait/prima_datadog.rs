@@ -2,6 +2,8 @@
 name = "prima_datadog"
 version = "0.1.0"
 edition = "2018"
+description = "An opinionated library to share code and approach to Datadog logging in prima.it"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
