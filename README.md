@@ -1,12 +1,12 @@
-# prima_datadog
+# Prima Datadog
 
 This is an opinionated library to share code and approach to Datadog logging in prima.it
 
 #### Getting started
 
-You need to call [Datadog::init] in your main binary, and to do so you'll need as argument a type that implements the [Configuration] trait.
+You need to call `Datadog::init` in your main binary, and to do so you'll need as argument a type that implements the `Configuration` trait.
 
-Inside the [configuration] you'll find an [implementation of this trait][configuration::PrimaConfiguration] tailored for prima.it needs.
+Inside the `configuration` you'll find an implementation of this trait tailored for prima.it needs.
 
 ```rust
 use prima_datadog::{Datadog, configuration::PrimaConfiguration};
@@ -27,7 +27,7 @@ prima_datadog::incr!("test");
 prima_datadog::decr!("test"; "some" => "data");
 ```
 
-The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef<str>]
+The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements `AsRef`
 
 ```rust
 enum Metric {

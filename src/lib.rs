@@ -25,7 +25,7 @@
 //! prima_datadog::decr!("test"; "some" => "data");
 //! ```
 //!
-//! The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef<str>]
+//! The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef] for `T: str`
 //!
 //! ```
 //! enum Metric {
