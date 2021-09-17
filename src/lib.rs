@@ -61,11 +61,13 @@ impl Datadog {
         self.is_reporting_enabled
     }
 
+    /// Increment a StatsD counter
     pub fn incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.incr(metric.as_ref(), tags);
     }
 
+    /// Decrement a StatsD counter
     pub fn decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.decr(metric.as_ref(), tags);
