@@ -1,6 +1,9 @@
+//! prima_datadog errors
+
 use dogstatsd::DogstatsdError;
 use thiserror::Error;
 
+/// the main Error type for the crate
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Unable to initialize Datadog global service with once_cell")]

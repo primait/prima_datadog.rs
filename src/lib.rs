@@ -1,14 +1,16 @@
-use crate::client::DogstatsdClient;
 use crate::configuration::Configuration;
 use crate::error::Error;
 use once_cell::sync::OnceCell;
 
-pub mod client;
+mod client;
 pub mod configuration;
 pub mod error;
 
+pub use client::DogstatsdClient;
+
 static INSTANCE: OnceCell<Datadog> = OnceCell::new();
 
+/// The Datadog struct is the main entry point for the library
 pub struct Datadog {
     /// an instance of a dogstatsd::Client
     client: Box<dyn DogstatsdClient + Send + Sync>,
@@ -19,7 +21,7 @@ pub struct Datadog {
 }
 
 impl Datadog {
-    /// Initializes a Datadog instance with a struct that implements the `Configuration` trait
+    /// Initializes a Datadog instance with a struct that implements the [Configuration] trait
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
         let dogstatsd_client_options = dogstatsd::Options::new(
             configuration.from_addr(),
@@ -38,7 +40,7 @@ impl Datadog {
     }
 
     /// initialize a Datadog instance with bare parameters.
-    /// This should be used carefully. Use `Datadog::init` instead
+    /// This should be used carefully. Use [Datadog::init] instead
     pub fn new<'a>(
         client: impl 'static + DogstatsdClient + Send + Sync,
         is_reporting_enabled: bool,
@@ -70,6 +72,7 @@ impl Datadog {
     }
 }
 
+/// Increment a StatsD counter
 #[macro_export]
 macro_rules! incr {
     ($stat:literal) => {
@@ -94,6 +97,7 @@ macro_rules! incr {
     };
 }
 
+/// Decrement a StatsD counter
 #[macro_export]
 macro_rules! decr {
     ($stat:literal) => {

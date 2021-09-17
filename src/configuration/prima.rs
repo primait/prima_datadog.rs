@@ -1,4 +1,4 @@
-//! this is the configuration module for prima environment
+//! Configuration module for prima environment
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
@@ -51,9 +51,9 @@ impl Configuration for PrimaConfiguration {
     }
 }
 
-/// Represent an environment in which the datadog client is running.
+/// Represent an environment in which the datadog client runs.
 /// This is useful for enforcing rules based on environment for every application that uses the library.
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Environment {
     Dev,
     Qa,
@@ -83,5 +83,24 @@ impl ToString for Environment {
             Environment::Staging => "staging".to_string(),
             Environment::Production => "production".to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_from_str() {
+        assert_eq!(Some(Environment::Dev), "dev".parse().ok());
+        assert_eq!(Some(Environment::Qa), "qa".parse().ok());
+        assert_eq!(Some(Environment::Staging), "staging".parse().ok());
+        assert_eq!(Some(Environment::Production), "production".parse().ok());
+    }
+
+    #[test]
+    pub fn test_from_str_err() {
+        assert_eq!(None, "".parse::<Environment>().ok());
+        assert_eq!(None, "whatever".parse::<Environment>().ok());
     }
 }
