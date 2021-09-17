@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     pub fn test_from_str_err() {
-        assert_eq!(None, "".parse::<Environment>().ok());
+        assert_eq!(None, "".parse::<Environment>().err());
         assert_eq!(None, "whatever".parse::<Environment>().ok());
     }
 }
