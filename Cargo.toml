@@ -1,6 +1,6 @@
 [package]
 name = "prima_datadog"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 description = "An opinionated library to share code and approach to Datadog logging in prima.it"
 license = "MIT"
