@@ -7,21 +7,44 @@
 //! Inside the [configuration] you'll find an [implementation of this trait][configuration::PrimaConfiguration] tailored for prima.it needs.
 //!
 //! ```
-//! use prima_datadog::{Datadog, configuration::PrimaConfiguration};
+//! use prima_datadog::{*, configuration::PrimaConfiguration};
 //!
+//! // initializes the PrimaConfiguration struct
 //! let configuration = PrimaConfiguration::new(
 //!     "0.0.0.0:1234", // to address
 //!     "0.0.0.0:0", // from address
 //!     "service_name", // namespace for all metrics
 //!     "production".parse().unwrap() // environment
 //! );
+//!
+//! // Initializes a Datadog instance
 //! Datadog::init(configuration);
+//!
 //! // Then you can use the macros exposed at the base level of the module
-//! prima_datadog::incr!("test");
-//! prima_datadog::decr!("test"; "some" => "data");
-//! prima_datadog::count!("test", 10; "some" => "data");
+//! incr!("test");
+//! incr!("test"; "some" => "data");
+//! decr!("test");
+//! decr!("test"; "some" => "data");
+//! count!("test", 20);
+//! count!("test", 10; "some" => "data");
+//! time!("test", || { println!("expensive computation");});
+//! time!("test", || { println!("expensive computation");}; "some" => "data");
+//! timing!("test", 20);
+//! timing!("test", 20; "some" => "data");
+//! gauge!("test", "gauge value");
+//! gauge!("test", "gauge value"; "some" => "data");
+//! histogram!("test", "histogram value");
+//! histogram!("test", "histogram value"; "some" => "data");
+//! distribution!("test", "distribution value");
+//! distribution!("test", "distribution value"; "some" => "data");
+//! set!("test", "set value");
+//! set!("test", "set value"; "some" => "data");
 //!  
-//! // The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef] for `T: str`
+//! // The first argument is the metric name. It accepts string literal (like the previous example)
+//! // or a type path that implements [AsRef] for `T: str`
+//!
+//! // custom metric, based on an enum type. It can really be whatever you want, //!
+//! // as long as it implements AsRef<str>
 //! enum Metric {
 //!     John,
 //!     Paul,
@@ -41,17 +64,16 @@
 //! }
 //!
 //! // now you can do
-//! prima_datadog::incr!(Metric::John; "play" => "guitar");
-//! prima_datadog::incr!(Metric::Paul; "play" => "bass");
-//! prima_datadog::incr!(Metric::George; "play" => "sitar");
-//! prima_datadog::incr!(Metric::Ringo; "play" => "drums");
+//! incr!(Metric::John; "play" => "guitar");
+//! incr!(Metric::Paul; "play" => "bass");
+//! incr!(Metric::George; "play" => "sitar");
+//! incr!(Metric::Ringo; "play" => "drums");
 //! ```
 //!
 //! ## References
 //!
 //!   - [Datadog docs](https://docs.datadoghq.com/getting_started/)
 //!   - [Getting started with Datadog tags](https://docs.datadoghq.com/getting_started/tagging/)
-
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
 
 use crate::configuration::Configuration;
@@ -151,6 +173,57 @@ impl Datadog {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.time(metric.as_ref(), tags, Box::new(block));
     }
+
+    /// Send your own timing metric in milliseconds
+    pub fn timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.timing(metric.as_ref(), ms, tags);
+    }
+
+    /// Report an arbitrary value as a gauge
+    pub fn gauge(
+        &self,
+        metric: impl AsRef<str>,
+        value: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.gauge(metric.as_ref(), value.as_ref(), tags);
+    }
+
+    /// Report a value in a histogram
+    pub fn histogram(
+        &self,
+        metric: impl AsRef<str>,
+        value: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.histogram(metric.as_ref(), value.as_ref(), tags);
+    }
+
+    /// Report a value in a distribution
+    pub fn distribution(
+        &self,
+        metric: impl AsRef<str>,
+        value: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client
+            .distribution(metric.as_ref(), value.as_ref(), tags);
+    }
+
+    /// Report a value in a set
+    pub fn set(
+        &self,
+        metric: impl AsRef<str>,
+        value: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.set(metric.as_ref(), value.as_ref(), tags);
+    }
 }
 
 /// Increment a StatsD counter
@@ -213,7 +286,7 @@ macro_rules! count {
     };
     ($stat:path, $count:literal) => {
         if $crate::Datadog::global().is_reporting_enabled() {
-            $crate::Datadog::global().count($stat.as_ref(), vec![]);
+            $crate::Datadog::global().count($stat.as_ref(), $count, vec![]);
         }
     };
     ($stat:literal, $count:literal; $( $key:expr => $value:expr ), *) => {
@@ -224,6 +297,176 @@ macro_rules! count {
     ($stat:path, $count:literal; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().count($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Make an arbitrary change to a StatsD counter
+#[macro_export]
+macro_rules! time {
+    ($stat:literal, || $block:expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat, vec![], || $block);
+        }
+    };
+    ($stat:literal, move || $block:expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat, vec![], || $block);
+        }
+    };
+    ($stat:path, || $block:expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat.as_ref(), vec![], || $block);
+        }
+    };
+    ($stat:path, move || $block:expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat.as_ref(), vec![], || $block);
+        }
+    };
+    ($stat:literal, || $block:expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
+        }
+    };
+    ($stat:literal, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
+        }
+    };
+    ($stat:path, || $block:expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
+        }
+    };
+    ($stat:path, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().time($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
+        }
+    };
+}
+
+/// Send your own timing metric in milliseconds
+#[macro_export]
+macro_rules! timing {
+    ($stat:literal, $ms:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().timing($stat, $ms, vec![]);
+        }
+    };
+    ($stat:path, $ms:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().timing($stat.as_ref(), $ms, vec![]);
+        }
+    };
+    ($stat:literal, $ms:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().timing($stat, $ms, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $ms:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().timing($stat.as_ref(), $ms, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Report an arbitrary value as a gauge
+#[macro_export]
+macro_rules! gauge {
+    ($stat:literal, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().gauge($stat, $val, vec![]);
+        }
+    };
+    ($stat:path, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().gauge($stat.as_ref(), $val, vec![]);
+        }
+    };
+    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().gauge($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().gauge($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Report a value in a histogram
+#[macro_export]
+macro_rules! histogram {
+    ($stat:literal, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().histogram($stat, $val, vec![]);
+        }
+    };
+    ($stat:path, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().histogram($stat.as_ref(), $val, vec![]);
+        }
+    };
+    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().histogram($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().histogram($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Report a value in a distribution
+#[macro_export]
+macro_rules! distribution {
+    ($stat:literal, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().distribution($stat, $val, vec![]);
+        }
+    };
+    ($stat:path, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().distribution($stat.as_ref(), $val, vec![]);
+        }
+    };
+    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().distribution($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().distribution($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Report a value in a set
+#[macro_export]
+macro_rules! set {
+    ($stat:literal, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().set($stat, $val, vec![]);
+        }
+    };
+    ($stat:path, $val:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().set($stat.as_ref(), $val, vec![]);
+        }
+    };
+    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().set($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().set($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
     };
 }

@@ -114,3 +114,101 @@ pub fn time_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
 
     client_mock
 }
+
+#[allow(dead_code)]
+pub fn timing_mock(metric: &'static str, ms: i64, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_timing()
+        .once()
+        .with(
+            eq(metric),
+            eq(ms),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn gauge_mock(metric: &'static str, value: &'static str, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_gauge()
+        .once()
+        .with(
+            eq(metric),
+            eq(value),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn histogram_mock(
+    metric: &'static str,
+    value: &'static str,
+    tags: &'static [&str],
+) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_histogram()
+        .once()
+        .with(
+            eq(metric),
+            eq(value),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn distribution_mock(
+    metric: &'static str,
+    value: &'static str,
+    tags: &'static [&str],
+) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_distribution()
+        .once()
+        .with(
+            eq(metric),
+            eq(value),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn set_mock(metric: &'static str, value: &'static str, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_set()
+        .once()
+        .with(
+            eq(metric),
+            eq(value),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}

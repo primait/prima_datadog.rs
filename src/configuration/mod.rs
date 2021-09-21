@@ -4,7 +4,7 @@ mod prima;
 
 pub use prima::PrimaConfiguration;
 
-/// A trait representing valid configuration entity
+/// A trait representing a valid configuration entity
 pub trait Configuration {
     /// The address of the udp socket we'll bind to for sending
     fn to_addr(&self) -> &str;

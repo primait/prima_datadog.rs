@@ -1,4 +1,4 @@
-//! prima_datadog errors
+//! Error module for this crate
 
 use dogstatsd::DogstatsdError;
 use thiserror::Error;
