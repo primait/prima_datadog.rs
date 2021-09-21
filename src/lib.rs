@@ -13,21 +13,15 @@
 //!     "0.0.0.0:1234", // to address
 //!     "0.0.0.0:0", // from address
 //!     "service_name", // namespace for all metrics
-//!     "staging" // environment
+//!     "production".parse().unwrap() // environment
 //! );
 //! Datadog::init(configuration);
-//! ```
-//!
-//! Then you can use the macros exposed at the base level of the module
-//!
-//! ```
+//! // Then you can use the macros exposed at the base level of the module
 //! prima_datadog::incr!("test");
 //! prima_datadog::decr!("test"; "some" => "data");
-//! ```
-//!
-//! The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef] for `T: str`
-//!
-//! ```
+//! prima_datadog::count!("test", 10; "some" => "data");
+//!  
+//! // The first argument is the metric name. It accepts string literal (like the previous example) or a type path that implements [AsRef] for `T: str`
 //! enum Metric {
 //!     John,
 //!     Paul,
@@ -45,11 +39,8 @@
 //!         }
 //!     }
 //! }
-//! ```
 //!
-//! and then
-//!
-//! ```
+//! // now you can do
 //! prima_datadog::incr!(Metric::John; "play" => "guitar");
 //! prima_datadog::incr!(Metric::Paul; "play" => "bass");
 //! prima_datadog::incr!(Metric::George; "play" => "sitar");
@@ -72,6 +63,7 @@ pub mod configuration;
 pub mod error;
 
 pub use client::DogstatsdClient;
+pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 
 static INSTANCE: OnceCell<Datadog> = OnceCell::new();
 
@@ -96,7 +88,7 @@ impl Datadog {
         let datadog_instance = Self {
             client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
             is_reporting_enabled: configuration.is_reporting_enabled(),
-            default_tags: vec![],
+            default_tags: configuration.default_tags(),
         };
 
         INSTANCE.get_or_init(|| datadog_instance);
@@ -136,6 +128,28 @@ impl Datadog {
     pub fn decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.decr(metric.as_ref(), tags);
+    }
+
+    /// Make an arbitrary change to a StatsD counter
+    pub fn count(
+        &self,
+        metric: impl AsRef<str>,
+        count: i64,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.count(metric.as_ref(), count, tags);
+    }
+
+    /// Make an arbitrary change to a StatsD counter
+    pub fn time(
+        &self,
+        metric: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+        block: impl FnOnce() + 'static,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.time(metric.as_ref(), tags, Box::new(block));
     }
 }
 
@@ -185,6 +199,31 @@ macro_rules! decr {
     ($stat:path; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().decr($stat.as_ref(), std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Decrement a StatsD counter
+#[macro_export]
+macro_rules! count {
+    ($stat:literal, $count:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().count($stat, $count, vec![]);
+        }
+    };
+    ($stat:path, $count:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().count($stat.as_ref(), vec![]);
+        }
+    };
+    ($stat:literal, $count:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().count($stat, $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $count:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().count($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
     };
 }

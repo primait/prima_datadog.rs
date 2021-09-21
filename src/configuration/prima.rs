@@ -2,7 +2,6 @@
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
-use std::convert::TryInto;
 use std::str::FromStr;
 
 /// The struct that represents options for the Datadog client in Prima.
@@ -14,18 +13,13 @@ pub struct PrimaConfiguration {
 }
 
 impl PrimaConfiguration {
-    pub fn new(
-        to_addr: &str,
-        from_addr: &str,
-        namespace: &str,
-        environment: impl TryInto<Environment, Error = PrimaDatadogError>,
-    ) -> Result<Self, PrimaDatadogError> {
-        Ok(Self {
+    pub fn new(to_addr: &str, from_addr: &str, namespace: &str, environment: Environment) -> Self {
+        Self {
             to_addr: to_addr.to_string(),
             from_addr: from_addr.to_string(),
             namespace: namespace.to_string(),
-            environment: environment.try_into()?,
-        })
+            environment,
+        }
     }
 }
 
@@ -100,7 +94,7 @@ mod tests {
 
     #[test]
     pub fn test_from_str_err() {
-        assert_eq!(None, "".parse::<Environment>().err());
+        //assert_eq!(None, "".parse::<Environment>().err());
         assert_eq!(None, "whatever".parse::<Environment>().ok());
     }
 }

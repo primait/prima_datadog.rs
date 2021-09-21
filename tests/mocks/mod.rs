@@ -1,5 +1,5 @@
 use mockall::{mock, predicate::*};
-use prima_datadog::DogstatsdClient;
+use prima_datadog::{DogstatsdClient, ServiceCheckOptions, ServiceStatus};
 
 mock! {
     pub Client {}
@@ -9,6 +9,39 @@ mock! {
 
         /// Decrement a StatsD counter
         fn decr(&self, metric: &str, tags: Vec<String>);
+
+        /// Make an arbitrary change to a StatsD counter
+        fn count(&self, metric: &str, count: i64, tags: Vec<String>);
+
+        /// Time how long it takes for a block of code to execute
+        fn time(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce()>);
+
+        /// Send your own timing metric in milliseconds
+        fn timing(&self, metric: &str, ms: i64, tags: Vec<String>);
+
+        /// Report an arbitrary value as a gauge
+        fn gauge(&self, metric: &str, val: &str, tags: Vec<String>);
+
+        /// Report a value in a histogram
+        fn histogram(&self, metric: &str, val: &str, tags: Vec<String>);
+
+        /// Report a value in a distribution
+        fn distribution(&self, metric: &str, val: &str, tags: Vec<String>);
+
+        /// Report a value in a set
+        fn set(&self, metric: &str, val: &str, tags: Vec<String>);
+
+        /// Report the status of a service
+        fn service_check(
+            &self,
+            metric: &str,
+            val: ServiceStatus,
+            tags: Vec<String>,
+            options: Option<ServiceCheckOptions>,
+        );
+
+        /// Send a custom event as a title and a body
+        fn event(&self, title: &str, text: &str, tags: Vec<String>);
     }
 }
 
@@ -40,6 +73,42 @@ pub fn decr_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
             function(move |called_tags: &Vec<String>| {
                 called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
             }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn count_mock(metric: &'static str, count: i64, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_count()
+        .once()
+        .with(
+            eq(metric),
+            eq(count),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn time_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_time()
+        .once()
+        .with(
+            eq(metric),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+            always(),
         )
         .return_const(());
 
