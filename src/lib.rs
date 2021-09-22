@@ -104,16 +104,14 @@ pub struct Datadog {
 }
 
 impl Datadog {
-    /// Initializes a Datadog instance with a struct that implements the [Configuration] trait
+    /// Initializes a Datadog instance with a struct that implements the [Configuration] trait.
+    /// Make sure that you run it only once otherwise you will get an error.
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
-        Self::do_init(configuration)
-    }
+        let mut initialized = false;
 
-    fn do_init(configuration: impl Configuration) -> Result<(), Error> {
-        let mut config = Some(configuration);
-
-        let _init = INSTANCE.get_or_try_init::<_, Error>(|| {
-            let configuration = config.take().unwrap();
+        // the closure is guaranteed to execute only once
+        let _ = INSTANCE.get_or_try_init::<_, Error>(|| {
+            initialized = true;
             let dogstatsd_client_options = dogstatsd::Options::new(
                 configuration.from_addr(),
                 configuration.to_addr(),
@@ -127,9 +125,10 @@ impl Datadog {
             })
         })?;
 
-        match config {
-            None => Ok(()),
-            Some(_) => Err(Error::OnceCellAlreadyInitialized),
+        if initialized {
+            Ok(())
+        } else {
+            Err(Error::OnceCellAlreadyInitialized)
         }
     }
 
