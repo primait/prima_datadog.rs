@@ -54,7 +54,7 @@ steps:
   image: public.ecr.aws/prima/drone-tools:1.20.1
   commands:
   - sed -i 's/USER app/USER root/g' ./Dockerfile
-  - docker build -t prima/bridge.rs-ci:${DRONE_COMMIT} ./
+  - docker build -t prima/prima_datadog.rs-ci:${DRONE_COMMIT} ./
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -63,19 +63,28 @@ steps:
   depends_on:
   - cache-restore
 
-- name: cargo-format
-  image: prima/bridge.rs-ci:${DRONE_COMMIT}
+- name: cargo-deps
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
-  - cargo make --profile drone format-ci
+  - cargo fetch
   environment:
     CARGO_HOME: /drone/src/.cargo
   depends_on:
   - build-image
 
-- name: cargo-lint
-  image: prima/bridge.rs-ci:${DRONE_COMMIT}
+- name: cargo-format
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
-  - cargo make --profile drone lint
+  - cargo make --profile drone format-ci
+  environment:
+    CARGO_HOME: /drone/src/.cargo
+  depends_on:
+  - cargo-deps
+
+- name: cargo-clippy-ci
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
+  commands:
+  - cargo make --profile drone clippy-ci
   environment:
     BUILD_ENV: dev
     CARGO_HOME: /drone/src/.cargo
@@ -83,7 +92,7 @@ steps:
   - cargo-format
 
 - name: cargo-test
-  image: prima/bridge.rs-ci:${DRONE_COMMIT}
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
   - cargo make --profile drone test
   environment:
@@ -91,10 +100,10 @@ steps:
     CARGO_HOME: /drone/src/.cargo
     CARGO_HTTP_CAINFO: ""
   depends_on:
-  - cargo-lint
+  - cargo-clippy-ci
 
 - name: cargo-build
-  image: prima/bridge.rs-ci:${DRONE_COMMIT}
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
   - cargo make --profile drone build-ci
   environment:
@@ -108,7 +117,7 @@ steps:
   - cargo-test
 
 - name: cache-cleanup
-  image: prima/bridge.rs-ci:${DRONE_COMMIT}
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
   - cargo make --profile drone cache-cleanup
   when:
@@ -117,7 +126,7 @@ steps:
   depends_on:
   - cargo-build
   - cargo-format
-  - cargo-lint
+  - cargo-clippy-ci
   - cargo-test
 
 - name: cache-save
@@ -170,7 +179,7 @@ steps:
 - name: email-failure
   image: public.ecr.aws/prima/drone-email
   settings:
-    from: noreply@prima.it
+    from: drone@prima.it
     host: email-smtp.eu-west-1.amazonaws.com
   environment:
     PLUGIN_PASSWORD:
@@ -192,6 +201,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 3d246b905fa4fb7f669639dab2b4e86eb8940429821ed8969f2acdb5df6aa9bf
+hmac: 2c2fd39878d5f9f4439fc36c51c902f5a41d7aebf21c99e8c124a393234fd8cf
 
 ...
