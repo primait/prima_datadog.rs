@@ -127,29 +127,32 @@ pub struct Datadog {
 }
 
 impl Datadog {
-    /// Initializes a Datadog instance with a struct that implements the [Configuration] trait
+    /// Initializes a Datadog instance with a struct that implements the [Configuration] trait.
+    /// Make sure that you run it only once otherwise you will get an error.
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
-        match INSTANCE.get() {
-            None => Self::do_init(configuration),
-            Some(_) => Err(Error::OnceCellAlreadyInitialized),
+        let mut initialized = false;
+
+        // the closure is guaranteed to execute only once
+        let _ = INSTANCE.get_or_try_init::<_, Error>(|| {
+            initialized = true;
+            let dogstatsd_client_options = dogstatsd::Options::new(
+                configuration.from_addr(),
+                configuration.to_addr(),
+                configuration.namespace(),
+            );
+
+            Ok(Self {
+                client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
+                is_reporting_enabled: configuration.is_reporting_enabled(),
+                default_tags: configuration.default_tags(),
+            })
+        })?;
+
+        if initialized {
+            Ok(())
+        } else {
+            Err(Error::OnceCellAlreadyInitialized)
         }
-    }
-
-    fn do_init(configuration: impl Configuration) -> Result<(), Error> {
-        let dogstatsd_client_options = dogstatsd::Options::new(
-            configuration.from_addr(),
-            configuration.to_addr(),
-            configuration.namespace(),
-        );
-        let datadog_instance = Self {
-            client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
-            is_reporting_enabled: configuration.is_reporting_enabled(),
-            default_tags: configuration.default_tags(),
-        };
-
-        INSTANCE.get_or_init(|| datadog_instance);
-
-        Ok(())
     }
 
     /// initialize a Datadog instance with bare parameters.
