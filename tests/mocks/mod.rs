@@ -1,5 +1,5 @@
 use mockall::{mock, predicate::*};
-use prima_datadog::{DogstatsdClient, ServiceCheckOptions, ServiceStatus};
+use prima_datadog::*;
 
 mock! {
     pub Client {}
@@ -204,6 +204,62 @@ pub fn set_mock(metric: &'static str, value: &'static str, tags: &'static [&str]
         .with(
             eq(metric),
             eq(value),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn service_check_mock(
+    metric: &'static str,
+    value: ServiceStatus,
+    tags: &'static [&str],
+    options: Option<ServiceCheckOptions>,
+) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_service_check()
+        .once()
+        .with(
+            eq(metric),
+            function(
+                move |called_value: &ServiceStatus| match (called_value, value) {
+                    (ServiceStatus::OK, ServiceStatus::OK) => true,
+                    (ServiceStatus::Critical, ServiceStatus::Critical) => true,
+                    (ServiceStatus::Unknown, ServiceStatus::Unknown) => true,
+                    (ServiceStatus::Warning, ServiceStatus::Warning) => true,
+                    _ => false,
+                },
+            ),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            }),
+            function(move |called_options: &Option<ServiceCheckOptions>| {
+                match (called_options, options) {
+                    (Some(_), Some(_)) => true,
+                    (None, None) => true,
+                    _ => false,
+                }
+            }),
+        )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn event_mock(metric: &'static str, text: &'static str, tags: &'static [&str]) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_event()
+        .once()
+        .with(
+            eq(metric),
+            eq(text),
             function(move |called_tags: &Vec<String>| {
                 called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
             }),

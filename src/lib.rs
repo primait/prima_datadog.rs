@@ -39,6 +39,10 @@
 //! distribution!("test", "distribution value"; "some" => "data");
 //! set!("test", "set value");
 //! set!("test", "set value"; "some" => "data");
+//! service_check!("test", ServiceStatus::OK);
+//! service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
+//! event!("test", "test event");
+//! event!("test", "test event"; "some" => "data");
 //!  
 //! // The first argument is the metric name. It accepts string literal (like the previous example)
 //! // or a type path that implements [AsRef] for `T: str`
@@ -223,6 +227,30 @@ impl Datadog {
     ) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.set(metric.as_ref(), value.as_ref(), tags);
+    }
+
+    /// Report the status of a service
+    pub fn service_check(
+        &self,
+        metric: impl AsRef<str>,
+        value: ServiceStatus,
+        tags: impl IntoIterator<Item = String>,
+        options: Option<ServiceCheckOptions>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client
+            .service_check(metric.as_ref(), value, tags, options);
+    }
+
+    /// Send a custom event as a title and a body
+    pub fn event(
+        &self,
+        metric: impl AsRef<str>,
+        text: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
+        let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
+        self.client.event(metric.as_ref(), text.as_ref(), tags);
     }
 }
 
@@ -467,6 +495,100 @@ macro_rules! set {
     ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().set($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+}
+
+/// Report a value in a set
+#[macro_export]
+macro_rules! service_check {
+    // call with literal and status
+    ($stat:literal, $service_status:path) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, vec![], None);
+        }
+    };
+    ($stat:literal, $service_status:path, $options: ident) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, vec![], Some($options));
+        }
+    };
+    ($stat:literal, $service_status:path, $options: expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, vec![], Some($options));
+        }
+    };
+    // call with path, status and options
+    ($stat:path, $service_status:path) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, vec![], None);
+        }
+    };
+    ($stat:path, $service_status:path, $options: ident) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, vec![], Some($options));
+        }
+    };
+    ($stat:path, $service_status:path, $options: expr) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, vec![], Some($options));
+        }
+    };
+    // call with literal, status, options and tags
+    ($stat:literal, $service_status:path; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], None);
+        }
+    };
+    ($stat:literal, $service_status:path, $options: ident; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], Some($options));
+        }
+    };
+    ($stat:literal, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat, $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], Some($options));
+        }
+    };
+    // call with path, status, options and tags
+    ($stat:path, $service_status:path; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], None);
+        }
+    };
+    ($stat:path, $service_status:path, $options: ident; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], Some($options));
+        }
+    };
+    ($stat:path, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().service_check($stat.as_ref(), $service_status, std::vec![$(std::format!("{}:{}", $key, $value)), *], Some($options));
+        }
+    };
+}
+
+/// Send a custom event as a title and a body
+#[macro_export]
+macro_rules! event {
+    ($stat:literal, $text:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat, $text, vec![]);
+        }
+    };
+    ($stat:path, $text:literal) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat.as_ref(), $text, vec![]);
+        }
+    };
+    ($stat:literal, $text:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat, $text, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:path, $text:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat.as_ref(), $text, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
     };
 }
