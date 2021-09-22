@@ -106,27 +106,31 @@ pub struct Datadog {
 impl Datadog {
     /// Initializes a Datadog instance with a struct that implements the [Configuration] trait
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
-        match INSTANCE.get() {
-            None => Self::do_init(configuration),
-            Some(_) => Err(Error::OnceCellAlreadyInitialized),
-        }
+        Self::do_init(configuration)
     }
 
     fn do_init(configuration: impl Configuration) -> Result<(), Error> {
-        let dogstatsd_client_options = dogstatsd::Options::new(
-            configuration.from_addr(),
-            configuration.to_addr(),
-            configuration.namespace(),
-        );
-        let datadog_instance = Self {
-            client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
-            is_reporting_enabled: configuration.is_reporting_enabled(),
-            default_tags: configuration.default_tags(),
-        };
+        let mut config = Some(configuration);
 
-        INSTANCE.get_or_init(|| datadog_instance);
+        let _init = INSTANCE.get_or_try_init::<_, Error>(|| {
+            let configuration = config.take().unwrap();
+            let dogstatsd_client_options = dogstatsd::Options::new(
+                configuration.from_addr(),
+                configuration.to_addr(),
+                configuration.namespace(),
+            );
 
-        Ok(())
+            Ok(Self {
+                client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
+                is_reporting_enabled: configuration.is_reporting_enabled(),
+                default_tags: configuration.default_tags(),
+            })
+        })?;
+
+        match config {
+            None => Ok(()),
+            Some(_) => Err(Error::OnceCellAlreadyInitialized),
+        }
     }
 
     /// initialize a Datadog instance with bare parameters.
