@@ -2,7 +2,7 @@
 
 mod prima;
 
-pub use prima::PrimaConfiguration;
+pub use prima::{Environment, PrimaConfiguration};
 
 /// A trait representing a valid configuration entity
 pub trait Configuration {

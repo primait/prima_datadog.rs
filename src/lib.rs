@@ -106,6 +106,13 @@ pub struct Datadog {
 impl Datadog {
     /// Initializes a Datadog instance with a struct that implements the [Configuration] trait
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
+        match INSTANCE.get() {
+            None => Self::do_init(configuration),
+            Some(_) => Err(Error::OnceCellAlreadyInitialized),
+        }
+    }
+
+    fn do_init(configuration: impl Configuration) -> Result<(), Error> {
         let dogstatsd_client_options = dogstatsd::Options::new(
             configuration.from_addr(),
             configuration.to_addr(),
@@ -591,4 +598,28 @@ macro_rules! event {
             $crate::Datadog::global().event($stat.as_ref(), $text, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::configuration::{Environment, PrimaConfiguration};
+
+    #[test]
+    pub fn double_initialization() {
+        let datadog = Datadog::init(PrimaConfiguration::new(
+            "10.1.2.3:8125",
+            "127.0.0.1:9000",
+            "",
+            Environment::Dev,
+        ));
+        assert!(datadog.is_ok());
+        let datadog2 = Datadog::init(PrimaConfiguration::new(
+            "10.1.2.3:8125",
+            "127.0.0.1:9000",
+            "",
+            Environment::Production,
+        ));
+        assert!(datadog2.err().unwrap().is_once_cell_already_initialized());
+    }
 }
