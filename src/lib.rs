@@ -19,36 +19,59 @@
 //!
 //! // Initializes a Datadog instance
 //! Datadog::init(configuration);
+//! ```
 //!
-//! // Then you can use the macros exposed at the base level of the module
+//! Then you can use the macros exposed at the base level of the module.
+//! All macros accepts
+//! - a literal string or a path to a type that implements AsRef<str> as first argument.
+//! - zero or more arguments, separated by comma `,`, for the metrics that needs more data.
+//!     For exemple `count!` and `timing!` accepts a number while `service_check!` accepts a [ServiceStatus] and a [ServiceCheckOptions]
+//! - a list of tags (which is separated from the rest of the arguments by semicolon `;`) in the form of `"name" => "value"`
+//!
+//! ```
+//! # use prima_datadog::{*, configuration::PrimaConfiguration};
+//! # let configuration = PrimaConfiguration::new(
+//! #     "0.0.0.0:1234", // to address
+//! #     "0.0.0.0:0", // from address
+//! #     "service_name", // namespace for all metrics
+//! #     "production".parse().unwrap() // environment
+//! # );
+//! # Datadog::init(configuration);
 //! incr!("test");
-//! incr!("test"; "some" => "data");
-//! decr!("test");
+//! # incr!("test"; "some" => "data");
+//! # decr!("test");
 //! decr!("test"; "some" => "data");
 //! count!("test", 20);
 //! count!("test", 10; "some" => "data");
 //! time!("test", || { println!("expensive computation");});
 //! time!("test", || { println!("expensive computation");}; "some" => "data");
-//! timing!("test", 20);
+//! # timing!("test", 20);
 //! timing!("test", 20; "some" => "data");
-//! gauge!("test", "gauge value");
+//! # gauge!("test", "gauge value");
 //! gauge!("test", "gauge value"; "some" => "data");
-//! histogram!("test", "histogram value");
+//! # histogram!("test", "histogram value");
 //! histogram!("test", "histogram value"; "some" => "data");
-//! distribution!("test", "distribution value");
+//! # distribution!("test", "distribution value");
 //! distribution!("test", "distribution value"; "some" => "data");
-//! set!("test", "set value");
+//! # set!("test", "set value");
 //! set!("test", "set value"; "some" => "data");
 //! service_check!("test", ServiceStatus::OK);
 //! service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
-//! event!("test", "test event");
+//! # event!("test", "test event");
 //! event!("test", "test event"; "some" => "data");
-//!  
-//! // The first argument is the metric name. It accepts string literal (like the previous example)
-//! // or a type path that implements [AsRef] for `T: str`
+//! ```
 //!
-//! // custom metric, based on an enum type. It can really be whatever you want, //!
-//! // as long as it implements AsRef<str>
+//! This is an example of a custom metric, in this case based on an enum type, but it can really be whatever you want, as long as it implements AsRef<str>
+//!
+//! ```
+//! # use prima_datadog::{*, configuration::PrimaConfiguration};
+//! # let configuration = PrimaConfiguration::new(
+//! #     "0.0.0.0:1234", // to address
+//! #     "0.0.0.0:0", // from address
+//! #     "service_name", // namespace for all metrics
+//! #     "production".parse().unwrap() // environment
+//! # );
+//! # Datadog::init(configuration);
 //! enum Metric {
 //!     John,
 //!     Paul,
