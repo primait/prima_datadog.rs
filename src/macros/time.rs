@@ -1,4 +1,4 @@
-/// Make an arbitrary change to a StatsD counter
+/// Time a block of code (reports in ms)
 #[macro_export]
 macro_rules! time {
     ($stat:literal, || $block:expr) => {

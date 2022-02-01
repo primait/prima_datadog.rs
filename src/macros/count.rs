@@ -1,4 +1,4 @@
-/// Decrement a StatsD counter
+/// Make an arbitrary change to a StatsD counter
 #[macro_export]
 macro_rules! count {
     ($stat:literal, $count:literal) => {

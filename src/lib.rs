@@ -202,7 +202,7 @@ impl Datadog {
         self.client.count(metric.as_ref(), count, tags);
     }
 
-    /// Make an arbitrary change to a StatsD counter
+    /// Time a block of code (reports in ms)
     pub fn time(
         &self,
         metric: impl AsRef<str>,
