@@ -1,4 +1,4 @@
-/// Report a value in a set
+/// Report the status of a service
 #[macro_export]
 macro_rules! service_check {
     // call with literal and status
