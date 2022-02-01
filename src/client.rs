@@ -1,7 +1,7 @@
 use crate::{ServiceCheckOptions, ServiceStatus};
 
 /// This trait represent a client that is able to interact with the datadog statsd collector.
-/// It's main use in this library is having a common interface for the underlying implementation,
+/// Its main use in this library is having a common interface for the underlying implementation,
 /// and being able to mock it for testing purposes
 pub trait DogstatsdClient {
     /// Increment a StatsD counter
