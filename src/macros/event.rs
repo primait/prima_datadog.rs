@@ -11,7 +11,17 @@ macro_rules! event {
             $crate::Datadog::global().event($stat.as_ref(), $text, vec![]);
         }
     };
+    ($stat:literal, $text:ident) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat, $text, vec![]);
+        }
+    };
     ($stat:literal, $text:literal; $( $key:expr => $value:expr ), *) => {
+        if $crate::Datadog::global().is_reporting_enabled() {
+            $crate::Datadog::global().event($stat, $text, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        }
+    };
+    ($stat:literal, $text:ident; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().event($stat, $text, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
