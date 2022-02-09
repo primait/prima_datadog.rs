@@ -1,12 +1,12 @@
 /// Time a block of code (reports in ms)
 #[macro_export]
 macro_rules! time {
-    ($stat:literal, || $block:expr) => {
+    ($stat:expr, || $block:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().time($stat, vec![], || $block);
         }
     };
-    ($stat:literal, move || $block:expr) => {
+    ($stat:expr, move || $block:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().time($stat, vec![], || $block);
         }
@@ -21,12 +21,12 @@ macro_rules! time {
             $crate::Datadog::global().time($stat.as_ref(), vec![], || $block);
         }
     };
-    ($stat:literal, || $block:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, || $block:expr; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().time($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
         }
     };
-    ($stat:literal, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, move || $block:expr; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().time($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *], || $block);
         }
