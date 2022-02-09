@@ -47,5 +47,35 @@ macro_rules! time {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! time {
-    ($($tt:tt)*) => {};
+    ($stat:literal, || $block:expr) => {
+        let _ = $block;
+    };
+    ($stat:literal, move || $block:expr) => {
+        let _ = $block;
+    };
+    ($stat:path, || $block:expr) => {
+        let _ = $stat;
+        let _ = $block;
+    };
+    ($stat:path, move || $block:expr) => {
+        let _ = $stat;
+        let _ = $block;
+    };
+    ($stat:literal, || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $block;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:literal, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $block;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $block;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $block;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];};
 }

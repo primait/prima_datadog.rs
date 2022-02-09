@@ -53,9 +53,7 @@ pub fn incr_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
         .once()
         .with(
             eq(metric),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -70,9 +68,7 @@ pub fn decr_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
         .once()
         .with(
             eq(metric),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -88,9 +84,7 @@ pub fn count_mock(metric: &'static str, count: i64, tags: &'static [&str]) -> Mo
         .with(
             eq(metric),
             eq(count),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -105,9 +99,7 @@ pub fn time_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
         .once()
         .with(
             eq(metric),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
             always(),
         )
         .return_const(());
@@ -124,9 +116,7 @@ pub fn timing_mock(metric: &'static str, ms: i64, tags: &'static [&str]) -> Mock
         .with(
             eq(metric),
             eq(ms),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -142,9 +132,7 @@ pub fn gauge_mock(metric: &'static str, value: &'static str, tags: &'static [&st
         .with(
             eq(metric),
             eq(value),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -152,11 +140,7 @@ pub fn gauge_mock(metric: &'static str, value: &'static str, tags: &'static [&st
 }
 
 #[allow(dead_code)]
-pub fn histogram_mock(
-    metric: &'static str,
-    value: &'static str,
-    tags: &'static [&str],
-) -> MockClient {
+pub fn histogram_mock(metric: &'static str, value: &'static str, tags: &'static [&str]) -> MockClient {
     let mut client_mock = MockClient::new();
     client_mock
         .expect_histogram()
@@ -164,9 +148,7 @@ pub fn histogram_mock(
         .with(
             eq(metric),
             eq(value),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -174,11 +156,7 @@ pub fn histogram_mock(
 }
 
 #[allow(dead_code)]
-pub fn distribution_mock(
-    metric: &'static str,
-    value: &'static str,
-    tags: &'static [&str],
-) -> MockClient {
+pub fn distribution_mock(metric: &'static str, value: &'static str, tags: &'static [&str]) -> MockClient {
     let mut client_mock = MockClient::new();
     client_mock
         .expect_distribution()
@@ -186,9 +164,7 @@ pub fn distribution_mock(
         .with(
             eq(metric),
             eq(value),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -204,9 +180,7 @@ pub fn set_mock(metric: &'static str, value: &'static str, tags: &'static [&str]
         .with(
             eq(metric),
             eq(value),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 
@@ -226,24 +200,18 @@ pub fn service_check_mock(
         .once()
         .with(
             eq(metric),
-            function(
-                move |called_value: &ServiceStatus| match (called_value, value) {
-                    (ServiceStatus::OK, ServiceStatus::OK) => true,
-                    (ServiceStatus::Critical, ServiceStatus::Critical) => true,
-                    (ServiceStatus::Unknown, ServiceStatus::Unknown) => true,
-                    (ServiceStatus::Warning, ServiceStatus::Warning) => true,
-                    _ => false,
-                },
-            ),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+            function(move |called_value: &ServiceStatus| {
+                matches!(
+                    (called_value, value),
+                    (ServiceStatus::OK, ServiceStatus::OK)
+                        | (ServiceStatus::Critical, ServiceStatus::Critical)
+                        | (ServiceStatus::Unknown, ServiceStatus::Unknown)
+                        | (ServiceStatus::Warning, ServiceStatus::Warning)
+                )
             }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
             function(move |called_options: &Option<ServiceCheckOptions>| {
-                match (called_options, options) {
-                    (Some(_), Some(_)) => true,
-                    (None, None) => true,
-                    _ => false,
-                }
+                matches!((called_options, options), (Some(_), Some(_)) | (None, None))
             }),
         )
         .return_const(());
@@ -260,9 +228,7 @@ pub fn event_mock(metric: &'static str, text: &'static str, tags: &'static [&str
         .with(
             eq(metric),
             eq(text),
-            function(move |called_tags: &Vec<String>| {
-                called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-            }),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
         .return_const(());
 

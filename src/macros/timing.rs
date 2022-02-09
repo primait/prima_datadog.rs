@@ -27,5 +27,15 @@ macro_rules! timing {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! timing {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $ms:literal) => {};
+    ($stat:path, $ms:literal) => {
+        let _ = $stat;
+    };
+    ($stat:literal, $ms:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $ms:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

@@ -27,5 +27,15 @@ macro_rules! event {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! event {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $text:literal) => {};
+    ($stat:path, $text:literal) => {
+        let _ = $stat;
+    };
+    ($stat:literal, $text:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $text:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

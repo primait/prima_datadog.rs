@@ -27,5 +27,15 @@ macro_rules! count {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! count {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $count:literal) => {};
+    ($stat:path, $count:literal) => {
+        let _ = $stat;
+    };
+    ($stat:literal, $count:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $count:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

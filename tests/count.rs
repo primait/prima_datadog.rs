@@ -17,13 +17,38 @@ pub fn count_with_type() {
 
 #[test]
 pub fn count_with_literal_and_tags() {
-    let mock = mocks::decr_mock("test", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, ["env:test"]).decr("test", vec!["added:tag".to_string()]);
+    let mock = mocks::count_mock("test", 10, &["added:tag", "env:test"]);
+    Datadog::new(mock, true, ["env:test"]).count("test", 10, vec!["added:tag".to_string()]);
 }
 
 #[test]
 pub fn count_with_type_and_tags() {
-    let mock = mocks::decr_mock("test1_event", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, ["env:test"])
-        .decr(common::TestEvent::Test1, vec!["added:tag".to_string()]);
+    let mock = mocks::count_mock("test1_event", 10, &["added:tag", "env:test"]);
+    Datadog::new(mock, true, ["env:test"]).count(common::TestEvent::Test1, 10, vec!["added:tag".to_string()]);
+}
+
+#[test]
+#[cfg(feature = "dev-null")]
+pub fn macro_count_with_literal() {
+    prima_datadog::count!("test", 10);
+}
+
+#[test]
+#[cfg(feature = "dev-null")]
+pub fn macro_count_with_type() {
+    use common::TestEvent;
+    prima_datadog::count!(TestEvent::Test1, 10);
+}
+
+#[test]
+#[cfg(feature = "dev-null")]
+pub fn macro_count_with_literal_and_tags() {
+    prima_datadog::count!("test", 10; "added" => "tag");
+}
+
+#[test]
+#[cfg(feature = "dev-null")]
+pub fn macro_count_with_type_and_tags() {
+    use common::{TestEvent, TestEvent2};
+    prima_datadog::count!(TestEvent::Test1, 10; "added" => TestEvent2::Test2);
 }

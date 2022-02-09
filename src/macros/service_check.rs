@@ -71,5 +71,60 @@ macro_rules! service_check {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! service_check {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $service_status:path) => {
+        let _ = $service_status;
+    };
+    ($stat:literal, $service_status:path, $options: ident) => {
+        let _ = $service_status;
+        let _ = $options;
+    };
+    ($stat:literal, $service_status:path, $options: expr) => {
+        let _ = $service_status;
+        let _ = $options;
+    };
+    ($stat:path, $service_status:path) => {
+        let _ = $stat;
+        let _ = $service_status;
+    };
+    ($stat:path, $service_status:path, $options: ident) => {
+        let _ = $stat;
+        let _ = $service_status;
+        let _ = $options;
+    };
+    ($stat:path, $service_status:path, $options: expr) => {
+        let _ = $stat;
+        let _ = $service_status;
+        let _ = $options;
+    };
+    ($stat:literal, $service_status:path; $( $key:expr => $value:expr ), *) => {
+        let _ = $service_status;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:literal, $service_status:path, $options: ident; $( $key:expr => $value:expr ), *) => {
+        let _ = $service_status;
+        let _ = $options;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:literal, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $service_status;
+        let _ = $options;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $service_status:path; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $service_status;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $service_status:path, $options: ident; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $service_status;
+        let _ = $options;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $service_status;
+        let _ = $options;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

@@ -27,5 +27,15 @@ macro_rules! incr {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! incr {
-    ($($tt:tt)*) => {};
+    ($stat:literal) => {};
+    ($stat:path) => {
+        let _ = $stat;
+    };
+    ($stat:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

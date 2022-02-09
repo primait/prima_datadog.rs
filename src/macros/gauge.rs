@@ -27,5 +27,20 @@ macro_rules! gauge {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! gauge {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $val:expr) => {
+        let _ = $val;
+    };
+    ($stat:path, $val:expr) => {
+        let _ = $stat;
+        let _ = $val;
+    };
+    ($stat:literal, $val:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $val;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $val:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $val;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

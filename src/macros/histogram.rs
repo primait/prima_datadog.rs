@@ -27,5 +27,15 @@ macro_rules! histogram {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! histogram {
-    ($($tt:tt)*) => {};
+    ($stat:literal, $val:literal) => {};
+    ($stat:path, $val:literal) => {
+        let _ = $stat;
+    };
+    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
+    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
+    };
 }

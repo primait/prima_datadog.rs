@@ -8,7 +8,9 @@ use thiserror::Error;
 pub enum Error {
     #[error("Unable to initialize Datadog global service with once_cell, because the service was already initialized. You should call Datadog::init() just once.")]
     OnceCellAlreadyInitialized,
-    #[error("Unable to initialize environment type. The accepted values are 'local', 'qa', 'staging' and 'production'")]
+    #[error(
+        "Unable to initialize environment type. The accepted values are 'local', 'qa', 'staging' and 'production'"
+    )]
     WrongEnvironmentDefinition,
     #[error(transparent)]
     DogstatsdError(#[from] DogstatsdError),

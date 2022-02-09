@@ -2,6 +2,7 @@ use crate::configuration::Configuration;
 
 /// The struct that represents options for the Datadog client in a test configuration.
 /// It's a NoOp configuration
+#[derive(Default)]
 pub struct TestConfiguration;
 
 impl Configuration for TestConfiguration {
@@ -23,11 +24,5 @@ impl Configuration for TestConfiguration {
 
     fn default_tags(&self) -> Vec<String> {
         vec![]
-    }
-}
-
-impl Default for TestConfiguration {
-    fn default() -> Self {
-        TestConfiguration {}
     }
 }

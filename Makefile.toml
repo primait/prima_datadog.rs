@@ -14,13 +14,13 @@ args = [
 
 [tasks.test]
 command = "cargo"
-args = ["test"]
+args = ["test", "--all-features"]
 dependencies = ["build"]
 
 [tasks.lint]
 description = "Run lint"
 command = "cargo"
-args = ["clippy", "--all-targets"]
+args = ["clippy", "--all-targets", "--all-features"]
 
 ### with cargo-limit installed
 [tasks.lbuild]
