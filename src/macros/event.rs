@@ -27,10 +27,5 @@ macro_rules! event {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! event {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal, $text:literal) => {};
-    ($stat:path, $text:literal) => {};
-    ($stat:literal, $text:literal; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, $text:literal; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }

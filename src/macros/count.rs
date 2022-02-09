@@ -27,10 +27,5 @@ macro_rules! count {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! count {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal, $count:literal) => {};
-    ($stat:path, $count:literal) => {};
-    ($stat:literal, $count:literal; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, $count:literal; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }

@@ -27,10 +27,5 @@ macro_rules! timing {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! timing {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal, $ms:literal) => {};
-    ($stat:path, $ms:literal) => {};
-    ($stat:literal, $ms:literal; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, $ms:literal; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }

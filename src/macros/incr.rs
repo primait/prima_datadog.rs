@@ -27,10 +27,5 @@ macro_rules! incr {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! incr {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal) => {};
-    ($stat:path) => {};
-    ($stat:literal; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }

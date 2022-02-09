@@ -47,14 +47,5 @@ macro_rules! time {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! time {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal, || $block:expr) => {};
-    ($stat:literal, move || $block:expr) => {};
-    ($stat:path, || $block:expr) => {};
-    ($stat:path, move || $block:expr) => {};
-    ($stat:literal, || $block:expr; $( $key:expr => $value:expr ), *) => {};
-    ($stat:literal, move || $block:expr; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, || $block:expr; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, move || $block:expr; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }

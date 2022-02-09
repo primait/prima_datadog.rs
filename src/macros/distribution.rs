@@ -27,10 +27,5 @@ macro_rules! distribution {
 #[macro_export]
 #[cfg(feature = "dev-null")]
 macro_rules! distribution {
-    // Keep all these pattern in order to avoid warning generation in the projects that use this lib
-    // at compile time
-    ($stat:literal, $val:literal) => {};
-    ($stat:path, $val:literal) => {};
-    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {};
-    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {};
+    ($($tt:tt)*) => {};
 }
