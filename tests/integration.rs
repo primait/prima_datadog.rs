@@ -1,5 +1,5 @@
 use once_cell::sync::OnceCell;
-use prima_datadog::{configuration::PrimaConfiguration, Datadog};
+use prima_datadog::{configuration::PrimaConfiguration, Datadog, ServiceStatus};
 use serial_test::serial;
 use std::net::UdpSocket;
 
@@ -27,6 +27,19 @@ fn test_event_notification_with_literal_as_description() {
 
     let event = read_as_string(socket);
     assert!(event.contains("variable"))
+}
+
+#[test]
+#[serial]
+fn test_service_check_with_path_as_input() {
+    let socket = init_test_datadog();
+
+    prima_datadog::service_check!("test", ServiceStatus::Critical);
+
+    let check = read_as_string(socket);
+
+    let expected = format!("test|{}", ServiceStatus::Critical as u32);
+    assert!(check.contains(&expected));
 }
 
 fn read_as_string(socket: &UdpSocket) -> String {
