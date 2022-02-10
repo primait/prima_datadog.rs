@@ -1,5 +1,7 @@
 use once_cell::sync::OnceCell;
-use prima_datadog::{configuration::PrimaConfiguration, Datadog, ServiceStatus};
+use prima_datadog::{
+    configuration::PrimaConfiguration, Datadog, ServiceCheckOptions, ServiceStatus,
+};
 use serial_test::serial;
 use std::net::UdpSocket;
 
@@ -31,6 +33,46 @@ fn test_event_notification_with_literal_as_description() {
 
 #[test]
 #[serial]
+fn test_service_check_with_option_and_key_value() {
+    let socket = init_test_datadog();
+    let options = ServiceCheckOptions {
+        timestamp: Some(123),
+        hostname: Some("localhost"),
+        message: Some("message"),
+    };
+
+    prima_datadog::service_check!("test", ServiceStatus::Critical, options; "key" => "value");
+
+    let check = read_as_string(socket);
+    let expected = format!(
+        "test|{}|d:123|h:localhost|m:message|#key:value",
+        ServiceStatus::Critical as u32
+    );
+    assert!(check.contains(&expected));
+}
+
+#[test]
+#[serial]
+fn test_service_check_with_option() {
+    let socket = init_test_datadog();
+    let options = ServiceCheckOptions {
+        timestamp: Some(123),
+        hostname: Some("localhost"),
+        message: Some("message"),
+    };
+
+    prima_datadog::service_check!("test", ServiceStatus::Critical, options);
+
+    let check = read_as_string(socket);
+    let expected = format!(
+        "test|{}|d:123|h:localhost|m:message",
+        ServiceStatus::Critical as u32
+    );
+    assert!(check.contains(&expected));
+}
+
+#[test]
+#[serial]
 fn test_service_check_with_path_as_input() {
     let socket = init_test_datadog();
 
@@ -43,7 +85,7 @@ fn test_service_check_with_path_as_input() {
 }
 
 fn read_as_string(socket: &UdpSocket) -> String {
-    let mut buf = [0; 50];
+    let mut buf = [0; 100];
     let (length, _) = socket
         .recv_from(&mut buf)
         .expect("Could not read from socket");
