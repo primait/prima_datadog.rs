@@ -1,7 +1,7 @@
 use prima_datadog::{ServiceCheckOptions, ServiceStatus};
 use serial_test::serial;
 
-use crate::end_to_end::{init_test_datadog, read_as_string};
+use crate::end_to_end::{init_test_datadog, read_string_from};
 
 #[test]
 #[serial]
@@ -15,12 +15,12 @@ fn test_service_check_with_option_and_key_value() {
 
     prima_datadog::service_check!("test", ServiceStatus::Critical, options; "key" => "value");
 
-    let check = read_as_string(socket);
+    let service_check = read_string_from(socket);
     let expected = format!(
         "test|{}|d:123|h:localhost|m:message|#key:value",
         ServiceStatus::Critical as u32
     );
-    assert!(check.contains(&expected));
+    assert!(service_check.contains(&expected));
 }
 
 #[test]
@@ -35,12 +35,12 @@ fn test_service_check_with_option() {
 
     prima_datadog::service_check!("test", ServiceStatus::Critical, options);
 
-    let check = read_as_string(socket);
+    let service_check = read_string_from(socket);
     let expected = format!(
         "test|{}|d:123|h:localhost|m:message",
         ServiceStatus::Critical as u32
     );
-    assert!(check.contains(&expected));
+    assert!(service_check.contains(&expected));
 }
 
 #[test]
@@ -50,8 +50,7 @@ fn test_service_check_with_path_as_input() {
 
     prima_datadog::service_check!("test", ServiceStatus::Critical);
 
-    let check = read_as_string(socket);
-
+    let service_check = read_string_from(socket);
     let expected = format!("test|{}", ServiceStatus::Critical as u32);
-    assert!(check.contains(&expected));
+    assert!(service_check.contains(&expected));
 }

@@ -7,7 +7,7 @@ use std::net::UdpSocket;
 
 static SOCKET: OnceCell<UdpSocket> = OnceCell::new();
 
-fn read_as_string(socket: &UdpSocket) -> String {
+fn read_string_from(socket: &UdpSocket) -> String {
     let mut buf = [0; 100];
     let (length, _) = socket
         .recv_from(&mut buf)
