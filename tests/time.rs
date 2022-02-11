@@ -24,9 +24,31 @@ pub fn time_with_literal_and_tags() {
 #[test]
 pub fn time_with_type_and_tags() {
     let mock = mocks::time_mock("test1_event", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, ["env:test"]).time(
-        common::TestEvent::Test1,
-        vec!["added:tag".to_string()],
-        || {},
-    );
+    Datadog::new(mock, true, ["env:test"]).time(common::TestEvent::Test1, vec!["added:tag".to_string()], || {});
+}
+
+#[test]
+#[cfg(feature = "noop")]
+pub fn macro_time_with_literal() {
+    prima_datadog::time!("test", || {});
+}
+
+#[test]
+#[cfg(feature = "noop")]
+pub fn macro_time_with_type() {
+    use common::TestEvent;
+    prima_datadog::time!(TestEvent::Test1, || {});
+}
+
+#[test]
+#[cfg(feature = "noop")]
+pub fn macro_time_with_literal_and_tags() {
+    prima_datadog::time!("test", || {}; "added" => "tag");
+}
+
+#[test]
+#[cfg(feature = "noop")]
+pub fn macro_time_with_type_and_tags() {
+    use common::{TestEvent, TestEvent2};
+    prima_datadog::time!(TestEvent::Test1, || {}; TestEvent2::Test2 => "tag");
 }

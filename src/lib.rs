@@ -192,12 +192,7 @@ impl Datadog {
     }
 
     /// Make an arbitrary change to a StatsD counter
-    pub fn count(
-        &self,
-        metric: impl AsRef<str>,
-        count: i64,
-        tags: impl IntoIterator<Item = String>,
-    ) {
+    pub fn count(&self, metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.count(metric.as_ref(), count, tags);
     }
@@ -220,23 +215,13 @@ impl Datadog {
     }
 
     /// Report an arbitrary value as a gauge
-    pub fn gauge(
-        &self,
-        metric: impl AsRef<str>,
-        value: impl AsRef<str>,
-        tags: impl IntoIterator<Item = String>,
-    ) {
+    pub fn gauge(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.gauge(metric.as_ref(), value.as_ref(), tags);
     }
 
     /// Report a value in a histogram
-    pub fn histogram(
-        &self,
-        metric: impl AsRef<str>,
-        value: impl AsRef<str>,
-        tags: impl IntoIterator<Item = String>,
-    ) {
+    pub fn histogram(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.histogram(metric.as_ref(), value.as_ref(), tags);
     }
@@ -249,17 +234,11 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
-        self.client
-            .distribution(metric.as_ref(), value.as_ref(), tags);
+        self.client.distribution(metric.as_ref(), value.as_ref(), tags);
     }
 
     /// Report a value in a set
-    pub fn set(
-        &self,
-        metric: impl AsRef<str>,
-        value: impl AsRef<str>,
-        tags: impl IntoIterator<Item = String>,
-    ) {
+    pub fn set(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.set(metric.as_ref(), value.as_ref(), tags);
     }
@@ -273,17 +252,11 @@ impl Datadog {
         options: Option<ServiceCheckOptions>,
     ) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
-        self.client
-            .service_check(metric.as_ref(), value, tags, options);
+        self.client.service_check(metric.as_ref(), value, tags, options);
     }
 
     /// Send a custom event as a title and a body
-    pub fn event(
-        &self,
-        metric: impl AsRef<str>,
-        text: impl AsRef<str>,
-        tags: impl IntoIterator<Item = String>,
-    ) {
+    pub fn event(&self, metric: impl AsRef<str>, text: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         let tags: Vec<String> = tags.into_iter().chain(self.default_tags.clone()).collect();
         self.client.event(metric.as_ref(), text.as_ref(), tags);
     }

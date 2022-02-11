@@ -32,13 +32,7 @@ pub trait DogstatsdClient {
     fn set(&self, metric: &str, val: &str, tags: Vec<String>);
 
     /// Report the status of a service
-    fn service_check(
-        &self,
-        metric: &str,
-        val: ServiceStatus,
-        tags: Vec<String>,
-        options: Option<ServiceCheckOptions>,
-    );
+    fn service_check(&self, metric: &str, val: ServiceStatus, tags: Vec<String>, options: Option<ServiceCheckOptions>);
 
     /// Send a custom event as a title and a body
     fn event(&self, title: &str, text: &str, tags: Vec<String>);
@@ -81,13 +75,7 @@ impl DogstatsdClient for dogstatsd::Client {
         let _ = self.set(metric, val, tags);
     }
 
-    fn service_check(
-        &self,
-        metric: &str,
-        val: ServiceStatus,
-        tags: Vec<String>,
-        options: Option<ServiceCheckOptions>,
-    ) {
+    fn service_check(&self, metric: &str, val: ServiceStatus, tags: Vec<String>, options: Option<ServiceCheckOptions>) {
         let _ = self.service_check(metric, val, tags, options);
     }
 
