@@ -47,10 +47,12 @@ macro_rules! time {
 #[macro_export]
 #[cfg(feature = "noop")]
 macro_rules! time {
-    ($stat:literal, || $block:expr) => {
+    ($stat:expr, || $block:expr) => {
+        let _ = $stat;
         let _ = $block;
     };
-    ($stat:literal, move || $block:expr) => {
+    ($stat:expr, move || $block:expr) => {
+        let _ = $stat;
         let _ = $block;
     };
     ($stat:path, || $block:expr) => {
@@ -61,11 +63,13 @@ macro_rules! time {
         let _ = $stat;
         let _ = $block;
     };
-    ($stat:literal, || $block:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
         let _ = $block;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };
-    ($stat:literal, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, move || $block:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
         let _ = $block;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };

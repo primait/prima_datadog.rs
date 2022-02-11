@@ -27,15 +27,22 @@ macro_rules! timing {
 #[macro_export]
 #[cfg(feature = "noop")]
 macro_rules! timing {
-    ($stat:literal, $ms:literal) => {};
-    ($stat:path, $ms:literal) => {
+    ($stat:expr, $ms:expr) => {
         let _ = $stat;
+        let _ = $ms;
     };
-    ($stat:literal, $ms:literal; $( $key:expr => $value:expr ), *) => {
+    ($stat:path, $ms:expr) => {
+        let _ = $stat;
+        let _ = $ms;
+    };
+    ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $ms;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };
-    ($stat:path, $ms:literal; $( $key:expr => $value:expr ), *) => {
+    ($stat:path, $ms:expr; $( $key:expr => $value:expr ), *) => {
         let _ = $stat;
+        let _ = $ms;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };
 }

@@ -27,14 +27,16 @@ macro_rules! gauge {
 #[macro_export]
 #[cfg(feature = "noop")]
 macro_rules! gauge {
-    ($stat:literal, $val:expr) => {
+    ($stat:expr, $val:expr) => {
+        let _ = $stat;
         let _ = $val;
     };
     ($stat:path, $val:expr) => {
         let _ = $stat;
         let _ = $val;
     };
-    ($stat:literal, $val:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
         let _ = $val;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };

@@ -27,15 +27,22 @@ macro_rules! set {
 #[macro_export]
 #[cfg(feature = "noop")]
 macro_rules! set {
-    ($stat:literal, $val:literal) => {};
-    ($stat:path, $val:literal) => {
+    ($stat:expr, $val:expr) => {
         let _ = $stat;
+        let _ = $val;
     };
-    ($stat:literal, $val:literal; $( $key:expr => $value:expr ), *) => {
+    ($stat:path, $val:expr) => {
+        let _ = $stat;
+        let _ = $val;
+    };
+    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
+        let _ = $stat;
+        let _ = $val;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };
-    ($stat:path, $val:literal; $( $key:expr => $value:expr ), *) => {
+    ($stat:path, $val:expr; $( $key:expr => $value:expr ), *) => {
         let _ = $stat;
+        let _ = $val;
         let _ = std::vec![$(std::format!("{}:{}", $key, $value)), *];
     };
 }
