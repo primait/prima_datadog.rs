@@ -1,7 +1,7 @@
 /// Increment a StatsD counter
 #[macro_export]
 macro_rules! incr {
-    ($stat:literal) => {
+    ($stat:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().incr($stat, vec![]);
         }
@@ -11,7 +11,7 @@ macro_rules! incr {
             $crate::Datadog::global().incr($stat.as_ref(), vec![]);
         }
     };
-    ($stat:literal; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().incr($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
