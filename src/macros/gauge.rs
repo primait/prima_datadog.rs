@@ -2,7 +2,7 @@
 #[macro_export]
 #[cfg(not(feature = "noop"))]
 macro_rules! gauge {
-    ($stat:literal, $val:expr) => {
+    ($stat:expr, $val:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().gauge($stat, $val, vec![]);
         }
@@ -12,7 +12,7 @@ macro_rules! gauge {
             $crate::Datadog::global().gauge($stat.as_ref(), $val, vec![]);
         }
     };
-    ($stat:literal, $val:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
         if $crate::Datadog::global().is_reporting_enabled() {
             $crate::Datadog::global().gauge($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
         }
