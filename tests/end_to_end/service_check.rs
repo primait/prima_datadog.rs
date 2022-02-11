@@ -36,10 +36,7 @@ fn test_service_check_with_option() {
     prima_datadog::service_check!("test", ServiceStatus::Critical, options);
 
     let service_check = read_string_from(socket);
-    let expected = format!(
-        "test|{}|d:123|h:localhost|m:message",
-        ServiceStatus::Critical as u32
-    );
+    let expected = format!("test|{}|d:123|h:localhost|m:message", ServiceStatus::Critical as u32);
     assert!(service_check.contains(&expected));
 }
 
