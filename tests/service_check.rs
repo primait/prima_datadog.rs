@@ -58,13 +58,13 @@ pub fn service_check_with_type_and_tags() {
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_service_check_with_literal() {
     prima_datadog::service_check!("test", ServiceStatus::OK, Some(ServiceCheckOptions::default()));
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_service_check_with_type() {
     use common::TestEvent;
     prima_datadog::service_check!(
@@ -75,7 +75,7 @@ pub fn macro_service_check_with_type() {
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_service_check_with_literal_and_tags() {
     prima_datadog::service_check!(
         "test",
@@ -86,7 +86,7 @@ pub fn macro_service_check_with_literal_and_tags() {
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_service_check_with_type_and_tags() {
     use common::{TestEvent, TestEvent2};
     prima_datadog::service_check!(

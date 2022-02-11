@@ -28,26 +28,26 @@ pub fn set_with_type_and_tags() {
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_set_with_literal() {
     prima_datadog::set!("test", "test_value");
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_set_with_type() {
     use common::TestEvent;
     prima_datadog::set!(TestEvent::Test1, "test_value");
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_set_with_literal_and_tags() {
     prima_datadog::set!("test", "test_value"; "added" => "tag");
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_set_with_type_and_tags() {
     use common::{TestEvent, TestEvent2};
     prima_datadog::set!(TestEvent::Test1, "test_value"; "added" => TestEvent2::Test2);

@@ -28,26 +28,26 @@ pub fn count_with_type_and_tags() {
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_count_with_literal() {
     prima_datadog::count!("test", 10);
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_count_with_type() {
     use common::TestEvent;
     prima_datadog::count!(TestEvent::Test1, 10);
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_count_with_literal_and_tags() {
     prima_datadog::count!("test", 10; "added" => "tag");
 }
 
 #[test]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 pub fn macro_count_with_type_and_tags() {
     use common::{TestEvent, TestEvent2};
     prima_datadog::count!(TestEvent::Test1, 10; "added" => TestEvent2::Test2);

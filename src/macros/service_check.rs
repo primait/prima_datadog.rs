@@ -1,6 +1,6 @@
 /// Report the status of a service
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! service_check {
     // call with literal and status
     ($stat:literal, $service_status:path) => {
@@ -69,7 +69,7 @@ macro_rules! service_check {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! service_check {
     ($stat:literal, $service_status:path) => {
         let _ = $service_status;

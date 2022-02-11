@@ -1,6 +1,6 @@
 /// Make an arbitrary change to a StatsD counter
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! count {
     ($stat:literal, $count:literal) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -25,7 +25,7 @@ macro_rules! count {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! count {
     ($stat:literal, $count:literal) => {};
     ($stat:path, $count:literal) => {

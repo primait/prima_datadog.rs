@@ -1,6 +1,6 @@
 /// Send a custom event as a title and a body
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! event {
     ($stat:literal, $text:literal) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -25,7 +25,7 @@ macro_rules! event {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! event {
     ($stat:literal, $text:literal) => {};
     ($stat:path, $text:literal) => {

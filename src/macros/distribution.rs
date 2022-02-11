@@ -1,6 +1,6 @@
 /// Report a value in a distribution
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! distribution {
     ($stat:literal, $val:literal) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -25,7 +25,7 @@ macro_rules! distribution {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! distribution {
     ($stat:literal, $val:literal) => {};
     ($stat:path, $val:literal) => {

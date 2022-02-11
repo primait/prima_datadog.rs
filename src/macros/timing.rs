@@ -1,6 +1,6 @@
 /// Send your own timing metric in milliseconds
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! timing {
     ($stat:literal, $ms:literal) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -25,7 +25,7 @@ macro_rules! timing {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! timing {
     ($stat:literal, $ms:literal) => {};
     ($stat:path, $ms:literal) => {

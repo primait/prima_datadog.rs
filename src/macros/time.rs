@@ -1,6 +1,6 @@
 /// Time a block of code (reports in ms)
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! time {
     ($stat:literal, || $block:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -45,7 +45,7 @@ macro_rules! time {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! time {
     ($stat:literal, || $block:expr) => {
         let _ = $block;

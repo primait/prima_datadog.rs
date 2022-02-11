@@ -1,6 +1,6 @@
 /// Report an arbitrary value as a gauge
 #[macro_export]
-#[cfg(not(feature = "dev-null"))]
+#[cfg(not(feature = "noop"))]
 macro_rules! gauge {
     ($stat:literal, $val:expr) => {
         if $crate::Datadog::global().is_reporting_enabled() {
@@ -25,7 +25,7 @@ macro_rules! gauge {
 }
 
 #[macro_export]
-#[cfg(feature = "dev-null")]
+#[cfg(feature = "noop")]
 macro_rules! gauge {
     ($stat:literal, $val:expr) => {
         let _ = $val;
