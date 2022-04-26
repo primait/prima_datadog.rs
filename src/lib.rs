@@ -141,6 +141,7 @@ impl Datadog {
                 configuration.from_addr(),
                 configuration.to_addr(),
                 configuration.namespace(),
+                configuration.default_tags(),
             );
 
             Ok(Self {
