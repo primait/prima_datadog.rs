@@ -6,12 +6,7 @@ use prima_datadog::{Datadog, ServiceCheckOptions, ServiceStatus};
 #[test]
 pub fn service_check_with_literal() {
     let mock = mocks::service_check_mock("test", ServiceStatus::OK, &[], Some(ServiceCheckOptions::default()));
-    Datadog::new(mock, true, vec![]).service_check(
-        "test",
-        ServiceStatus::OK,
-        vec![],
-        Some(ServiceCheckOptions::default()),
-    );
+    Datadog::new(mock, true).service_check("test", ServiceStatus::OK, vec![], Some(ServiceCheckOptions::default()));
 }
 
 #[test]
@@ -22,7 +17,7 @@ pub fn service_check_with_type() {
         &[],
         Some(ServiceCheckOptions::default()),
     );
-    Datadog::new(mock, true, vec![]).service_check(
+    Datadog::new(mock, true).service_check(
         common::TestEvent::Test1,
         ServiceStatus::OK,
         vec![],
@@ -38,7 +33,7 @@ pub fn service_check_with_literal_and_tags() {
         &["added:tag", "env:test"],
         Some(ServiceCheckOptions::default()),
     );
-    Datadog::new(mock, true, ["env:test"]).service_check(
+    Datadog::new(mock, true).service_check(
         "test",
         ServiceStatus::OK,
         vec!["added:tag".to_string()],
@@ -49,7 +44,7 @@ pub fn service_check_with_literal_and_tags() {
 #[test]
 pub fn service_check_with_type_and_tags() {
     let mock = mocks::service_check_mock("test1_event", ServiceStatus::OK, &["added:tag", "env:test"], None);
-    Datadog::new(mock, true, ["env:test"]).service_check(
+    Datadog::new(mock, true).service_check(
         common::TestEvent::Test1,
         ServiceStatus::OK,
         vec!["added:tag".to_string()],
