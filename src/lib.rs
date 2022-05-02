@@ -157,7 +157,7 @@ impl Datadog {
 
     /// initialize a Datadog instance with bare parameters.
     /// This should be used carefully. Use [Datadog::init] instead
-    pub fn new<'a>(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
+    pub fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
         Self {
             client: Box::new(client),
             is_reporting_enabled,
