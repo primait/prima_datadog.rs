@@ -7,6 +7,7 @@ pub use prima::{Environment, PrimaConfiguration};
 pub use test::TestConfiguration;
 
 /// A trait representing a valid configuration entity
+#[allow(clippy::wrong_self_convention)]
 pub trait Configuration {
     /// The address of the udp socket we'll bind to for sending
     fn to_addr(&self) -> &str;

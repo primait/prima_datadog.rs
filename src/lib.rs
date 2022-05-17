@@ -121,31 +121,32 @@ static INSTANCE: OnceCell<Datadog> = OnceCell::new();
 /// The Datadog struct is the main entry point for the library
 pub struct Datadog {
     /// an instance of a dogstatsd::Client
-    client: Box<dyn DogstatsdClient + Send + Sync>,
-    /// tells if metric should be reported. If false, nothing is sent to the udp socket.
-    is_reporting_enabled: bool,
+    client_opt: Option<Box<dyn DogstatsdClient + Send + Sync>>,
 }
 
 impl Datadog {
     /// Initializes a Datadog instance with a struct that implements the [Configuration] trait.
     /// Make sure that you run it only once otherwise you will get an error.
     pub fn init(configuration: impl Configuration) -> Result<(), Error> {
-        let mut initialized = false;
+        let mut initialized: bool = false;
 
         // the closure is guaranteed to execute only once
         let _ = INSTANCE.get_or_try_init::<_, Error>(|| {
             initialized = true;
-            let dogstatsd_client_options = dogstatsd::Options::new(
-                configuration.from_addr(),
-                configuration.to_addr(),
-                configuration.namespace(),
-                configuration.default_tags(),
-            );
 
-            Ok(Self {
-                client: Box::new(dogstatsd::Client::new(dogstatsd_client_options)?),
-                is_reporting_enabled: configuration.is_reporting_enabled(),
-            })
+            if configuration.is_reporting_enabled() {
+                let dogstatsd_client_options: dogstatsd::Options = dogstatsd::Options::new(
+                    configuration.from_addr(),
+                    configuration.to_addr(),
+                    configuration.namespace(),
+                    configuration.default_tags(),
+                );
+
+                let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;
+                Ok(Self::new(client))
+            } else {
+                Ok(Self { client_opt: None })
+            }
         })?;
 
         if initialized {
@@ -155,12 +156,11 @@ impl Datadog {
         }
     }
 
-    /// initialize a Datadog instance with bare parameters.
-    /// This should be used carefully. Use [Datadog::init] instead
-    pub fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
+    /// initialize a Datadog instance with bare parameters. In this case reporting is enabled by default
+    /// This should be used carefully. Consider using [Datadog::init] instead
+    pub fn new(client: impl 'static + DogstatsdClient + Send + Sync) -> Self {
         Self {
-            client: Box::new(client),
-            is_reporting_enabled,
+            client_opt: Some(Box::new(client)),
         }
     }
 
@@ -168,23 +168,25 @@ impl Datadog {
         INSTANCE.get().expect("Datadog not initialized")
     }
 
-    pub fn is_reporting_enabled(&self) -> bool {
-        self.is_reporting_enabled
-    }
-
     /// Increment a StatsD counter
     pub fn incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client.incr(metric.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.incr(metric.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Decrement a StatsD counter
     pub fn decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client.decr(metric.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.decr(metric.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Make an arbitrary change to a StatsD counter
     pub fn count(&self, metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
-        self.client.count(metric.as_ref(), count, tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.count(metric.as_ref(), count, tags.into_iter().collect());
+        }
     }
 
     /// Time a block of code (reports in ms)
@@ -194,25 +196,30 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
         block: impl FnOnce() + 'static,
     ) {
-        self.client
-            .time(metric.as_ref(), tags.into_iter().collect(), Box::new(block));
+        if let Some(client) = self.client_opt.as_ref() {
+            client.time(metric.as_ref(), tags.into_iter().collect(), Box::new(block));
+        }
     }
 
     /// Send your own timing metric in milliseconds
     pub fn timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
-        self.client.timing(metric.as_ref(), ms, tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.timing(metric.as_ref(), ms, tags.into_iter().collect());
+        }
     }
 
     /// Report an arbitrary value as a gauge
     pub fn gauge(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client
-            .gauge(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.gauge(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Report a value in a histogram
     pub fn histogram(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client
-            .histogram(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.histogram(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Report a value in a distribution
@@ -222,14 +229,16 @@ impl Datadog {
         value: impl AsRef<str>,
         tags: impl IntoIterator<Item = String>,
     ) {
-        self.client
-            .distribution(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.distribution(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Report a value in a set
     pub fn set(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client
-            .set(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.set(metric.as_ref(), value.as_ref(), tags.into_iter().collect());
+        }
     }
 
     /// Report the status of a service
@@ -240,14 +249,16 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
         options: Option<ServiceCheckOptions>,
     ) {
-        self.client
-            .service_check(metric.as_ref(), value, tags.into_iter().collect(), options);
+        if let Some(client) = self.client_opt.as_ref() {
+            client.service_check(metric.as_ref(), value, tags.into_iter().collect(), options);
+        }
     }
 
     /// Send a custom event as a title and a body
     pub fn event(&self, metric: impl AsRef<str>, text: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
-        self.client
-            .event(metric.as_ref(), text.as_ref(), tags.into_iter().collect());
+        if let Some(client) = self.client_opt.as_ref() {
+            client.event(metric.as_ref(), text.as_ref(), tags.into_iter().collect());
+        }
     }
 }
 
