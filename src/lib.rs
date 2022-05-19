@@ -159,8 +159,8 @@ impl Datadog {
         }
     }
 
-    /// initialize a Datadog instance with bare parameters. In this case reporting is enabled by default
-    /// This should be used carefully. Consider using [Datadog::init] instead
+    /// initialize a Datadog instance with bare parameters. This should be used carefully.
+    /// Consider using [Datadog::init] instead
     pub fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
         Self {
             client: Box::new(client),
