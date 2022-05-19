@@ -1,5 +1,6 @@
 use mockall::{mock, predicate::*};
-use prima_datadog::*;
+
+use crate::*;
 
 mock! {
     pub Client {}
