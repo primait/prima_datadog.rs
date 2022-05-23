@@ -3,6 +3,7 @@
 //! ### Getting started
 //!
 //! You need to call [Datadog::init] in your main binary, and to do so you'll need as argument a type that implements the [Configuration] trait.
+//! If you never call [Datadog::init] in your binary NO metrics will be sent.
 //!
 //! Inside the [configuration] you'll find an [implementation of this trait][configuration::PrimaConfiguration] tailored for prima.it needs.
 //!
@@ -159,9 +160,7 @@ impl Datadog {
         }
     }
 
-    /// initialize a Datadog instance with bare parameters. This should be used carefully.
-    /// Consider using [Datadog::init] instead
-    pub fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
+    fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
         Self {
             client: Box::new(client),
             is_reporting_enabled,
@@ -171,11 +170,11 @@ impl Datadog {
     /// Increment a StatsD counter
     pub fn incr(metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._incr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
+            instance.do_incr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
         }
     }
 
-    pub(crate) fn _incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
+    pub(crate) fn do_incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
             self.client
                 .incr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
@@ -185,11 +184,11 @@ impl Datadog {
     /// Decrement a StatsD counter
     pub fn decr(metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._decr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
+            instance.do_decr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
         }
     }
 
-    pub(crate) fn _decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
+    pub(crate) fn do_decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
             self.client
                 .decr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
@@ -199,11 +198,11 @@ impl Datadog {
     /// Make an arbitrary change to a StatsD counter
     pub fn count(metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._count(metric.as_ref(), count, tags.into_iter().collect::<Vec<String>>());
+            instance.do_count(metric.as_ref(), count, tags.into_iter().collect::<Vec<String>>());
         }
     }
 
-    pub(crate) fn _count(&self, metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
+    pub(crate) fn do_count(&self, metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
             self.client
                 .count(metric.as_ref(), count, tags.into_iter().collect::<Vec<String>>());
@@ -213,7 +212,7 @@ impl Datadog {
     /// Time a block of code (reports in ms)
     pub fn time(metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>, block: impl FnOnce() + 'static) {
         if let Some(instance) = INSTANCE.get() {
-            instance._time(
+            instance.do_time(
                 metric.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
                 Box::new(block),
@@ -221,7 +220,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _time(
+    pub(crate) fn do_time(
         &self,
         metric: impl AsRef<str>,
         tags: impl IntoIterator<Item = String>,
@@ -239,11 +238,11 @@ impl Datadog {
     /// Send your own timing metric in milliseconds
     pub fn timing(metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._timing(metric.as_ref(), ms, tags.into_iter().collect::<Vec<String>>());
+            instance.do_timing(metric.as_ref(), ms, tags.into_iter().collect::<Vec<String>>());
         }
     }
 
-    pub(crate) fn _timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
+    pub(crate) fn do_timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
             self.client
                 .timing(metric.as_ref(), ms, tags.into_iter().collect::<Vec<String>>());
@@ -253,7 +252,7 @@ impl Datadog {
     /// Report an arbitrary value as a gauge
     pub fn gauge(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._gauge(
+            instance.do_gauge(
                 metric.as_ref(),
                 value.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
@@ -261,7 +260,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _gauge(
+    pub(crate) fn do_gauge(
         &self,
         metric: impl AsRef<str>,
         value: impl AsRef<str>,
@@ -279,7 +278,7 @@ impl Datadog {
     /// Report a value in a histogram
     pub fn histogram(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._histogram(
+            instance.do_histogram(
                 metric.as_ref(),
                 value.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
@@ -287,7 +286,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _histogram(
+    pub(crate) fn do_histogram(
         &self,
         metric: impl AsRef<str>,
         value: impl AsRef<str>,
@@ -305,7 +304,7 @@ impl Datadog {
     /// Report a value in a distribution
     pub fn distribution(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._distribution(
+            instance.do_distribution(
                 metric.as_ref(),
                 value.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
@@ -313,7 +312,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _distribution(
+    pub(crate) fn do_distribution(
         &self,
         metric: impl AsRef<str>,
         value: impl AsRef<str>,
@@ -331,7 +330,7 @@ impl Datadog {
     /// Report a value in a set
     pub fn set(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._set(
+            instance.do_set(
                 metric.as_ref(),
                 value.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
@@ -339,7 +338,12 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _set(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
+    pub(crate) fn do_set(
+        &self,
+        metric: impl AsRef<str>,
+        value: impl AsRef<str>,
+        tags: impl IntoIterator<Item = String>,
+    ) {
         if self.is_reporting_enabled {
             self.client.set(
                 metric.as_ref(),
@@ -357,7 +361,7 @@ impl Datadog {
         options: Option<ServiceCheckOptions>,
     ) {
         if let Some(instance) = INSTANCE.get() {
-            instance._service_check(
+            instance.do_service_check(
                 metric.as_ref(),
                 value,
                 tags.into_iter().collect::<Vec<String>>(),
@@ -366,7 +370,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _service_check(
+    pub(crate) fn do_service_check(
         &self,
         metric: impl AsRef<str>,
         value: ServiceStatus,
@@ -386,7 +390,7 @@ impl Datadog {
     /// Send a custom event as a title and a body
     pub fn event(metric: impl AsRef<str>, text: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if let Some(instance) = INSTANCE.get() {
-            instance._event(
+            instance.do_event(
                 metric.as_ref(),
                 text.as_ref(),
                 tags.into_iter().collect::<Vec<String>>(),
@@ -394,7 +398,7 @@ impl Datadog {
         }
     }
 
-    pub(crate) fn _event(
+    pub(crate) fn do_event(
         &self,
         metric: impl AsRef<str>,
         text: impl AsRef<str>,
