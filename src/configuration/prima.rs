@@ -54,7 +54,7 @@ impl Configuration for PrimaConfiguration {
     }
 
     fn default_tags(&self) -> Vec<String> {
-        self.tags.iter().cloned().collect()
+        self.tags.clone()
     }
 }
 
