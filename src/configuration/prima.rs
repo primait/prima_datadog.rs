@@ -10,16 +10,24 @@ pub struct PrimaConfiguration {
     from_addr: String,
     namespace: String,
     environment: Environment,
+    tags: Vec<String>,
 }
 
 impl PrimaConfiguration {
     pub fn new(to_addr: &str, from_addr: &str, namespace: &str, environment: Environment) -> Self {
+        let env_str = environment.to_string();
         Self {
             to_addr: to_addr.to_string(),
             from_addr: from_addr.to_string(),
             namespace: namespace.to_string(),
             environment,
+            tags: vec![format!("env:{}", env_str)],
         }
+    }
+
+    pub fn with_tag<T: std::fmt::Display>(mut self, key: &str, value: &T) -> Self {
+        self.tags.push(format!("{}:{}", key, value));
+        self
     }
 }
 
@@ -41,7 +49,7 @@ impl Configuration for PrimaConfiguration {
     }
 
     fn default_tags(&self) -> Vec<String> {
-        vec![format!("env:{}", self.environment.to_string())]
+        self.tags.clone()
     }
 }
 
@@ -96,5 +104,15 @@ mod tests {
     pub fn test_from_str_err() {
         //assert_eq!(None, "".parse::<Environment>().err());
         assert_eq!(None, "whatever".parse::<Environment>().ok());
+    }
+
+    #[test]
+    pub fn test_tags() {
+        let count = 1;
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev)
+            .with_tag("key", &"value")
+            .with_tag("count", &count);
+
+        assert_eq!(config.default_tags(), vec!["env:dev", "key:value", "count:1"]);
     }
 }
