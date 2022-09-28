@@ -95,6 +95,7 @@ impl Display for Environment {
 
 /// Represents the country in which the datadog client runs.
 /// This is useful for enforcing rules based on country for every application that uses the library.
+#[derive(PartialEq, Debug, Clone)]
 pub enum Country {
     It,
     Es,
