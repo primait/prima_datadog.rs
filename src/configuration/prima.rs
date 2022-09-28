@@ -25,8 +25,8 @@ impl PrimaConfiguration {
         }
     }
 
-    pub fn with_tag<T: ToString>(mut self, key: &str, value: &T) -> Self {
-        self.tags.push(format!("{}:{}", key, value.to_string()));
+    pub fn with_tag<T: std::fmt::Display>(mut self, key: &str, value: &T) -> Self {
+        self.tags.push(format!("{}:{}", key, value));
         self
     }
 }
