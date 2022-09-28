@@ -2,6 +2,7 @@
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
+use std::fmt::Display;
 use std::str::FromStr;
 
 /// The struct that represents options for the Datadog client in Prima.
@@ -29,6 +30,10 @@ impl PrimaConfiguration {
         self.tags.push(format!("{}:{}", key, value));
         self
     }
+
+    pub fn country(self, country: Country) -> Self {
+        self.with_tag("country", &country)
+    }
 }
 
 impl Configuration for PrimaConfiguration {
@@ -49,7 +54,7 @@ impl Configuration for PrimaConfiguration {
     }
 
     fn default_tags(&self) -> Vec<String> {
-        self.tags.clone()
+        self.tags.iter().cloned().collect()
     }
 }
 
@@ -77,13 +82,44 @@ impl FromStr for Environment {
     }
 }
 
-impl ToString for Environment {
-    fn to_string(&self) -> String {
+impl Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Environment::Dev => "dev".to_string(),
-            Environment::Qa => "qa".to_string(),
-            Environment::Staging => "staging".to_string(),
-            Environment::Production => "production".to_string(),
+            Environment::Dev => write!(f, "dev"),
+            Environment::Qa => write!(f, "qa"),
+            Environment::Staging => write!(f, "staging"),
+            Environment::Production => write!(f, "production"),
+        }
+    }
+}
+
+/// Represents the country in which the datadog client runs.
+/// This is useful for enforcing rules based on country for every application that uses the library.
+pub enum Country {
+    It,
+    Es,
+    Uk,
+}
+
+impl FromStr for Country {
+    type Err = PrimaDatadogError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "it" => Ok(Self::It),
+            "es" => Ok(Self::Es),
+            "uk" => Ok(Self::Uk),
+            _ => Err(PrimaDatadogError::WrongCountryDefinition),
+        }
+    }
+}
+
+impl Display for Country {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Country::It => write!(f, "it"),
+            Country::Es => write!(f, "es"),
+            Country::Uk => write!(f, "uk"),
         }
     }
 }
@@ -114,5 +150,20 @@ mod tests {
             .with_tag("count", &count);
 
         assert_eq!(config.default_tags(), vec!["env:dev", "key:value", "count:1"]);
+    }
+
+    #[test]
+    pub fn test_country() {
+        let config =
+            PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev).country(Country::It);
+
+        assert_eq!(config.default_tags(), vec!["env:dev", "country:it"]);
+
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev)
+            .country(Country::It)
+            .country(Country::Es);
+
+        // Datadog tag keys are allowed to map to multiple values, and I suppose we're ok with that too (e.g. cross-country infra down the line?)
+        assert_eq!(config.default_tags(), vec!["env:dev", "country:it", "country:es"]);
     }
 }
