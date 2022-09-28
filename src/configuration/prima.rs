@@ -25,12 +25,8 @@ impl PrimaConfiguration {
         }
     }
 
-    pub fn with_tag<T: ToString>(self, key: &str, value: &T) -> Self {
-        self.do_with_tag(key, &value.to_string())
-    }
-
-    fn do_with_tag(mut self, key: &str, value: &str) -> Self {
-        self.tags.push(format!("{}:{}", key, value));
+    pub fn with_tag<T: ToString>(mut self, key: &str, value: &T) -> Self {
+        self.tags.push(format!("{}:{}", key, value.to_string()));
         self
     }
 }
