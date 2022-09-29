@@ -31,7 +31,7 @@ impl PrimaConfiguration {
         self
     }
 
-    pub fn country(self, country: Country) -> Self {
+    pub fn with_country(self, country: Country) -> Self {
         self.with_tag("prima:country", &country)
     }
 }
@@ -156,13 +156,13 @@ mod tests {
     #[test]
     pub fn test_country() {
         let config =
-            PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev).country(Country::It);
+            PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev).with_country(Country::It);
 
         assert_eq!(config.default_tags(), vec!["env:dev", "prima:country:it"]);
 
         let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev)
-            .country(Country::It)
-            .country(Country::Es);
+            .with_country(Country::It)
+            .with_country(Country::Es);
 
         // Datadog tag keys are allowed to map to multiple values, and I suppose we're ok with that too (e.g. cross-country infra down the line?)
         assert_eq!(
