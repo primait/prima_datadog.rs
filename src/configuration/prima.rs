@@ -60,7 +60,7 @@ impl Configuration for PrimaConfiguration {
 
 /// Represent an environment in which the datadog client runs.
 /// This is useful for enforcing rules based on environment for every application that uses the library.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum Environment {
     Dev,
     Qa,
@@ -95,7 +95,7 @@ impl Display for Environment {
 
 /// Represents the country in which the datadog client runs.
 /// This is useful for enforcing rules based on country for every application that uses the library.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Country {
     Common,
     It,
