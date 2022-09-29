@@ -14,6 +14,8 @@ pub enum Error {
     WrongEnvironmentDefinition,
     #[error(transparent)]
     DogstatsdError(#[from] DogstatsdError),
+    #[error("Unable to initialize country type. The accepted values are 'it', 'es' and 'uk'")]
+    WrongCountryDefinition,
 }
 
 #[cfg(test)]
@@ -23,6 +25,7 @@ impl Error {
             Error::OnceCellAlreadyInitialized => true,
             Error::WrongEnvironmentDefinition => false,
             Error::DogstatsdError(_) => false,
+            Error::WrongCountryDefinition => false,
         }
     }
 }

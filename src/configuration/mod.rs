@@ -3,7 +3,7 @@
 mod prima;
 mod test;
 
-pub use prima::{Environment, PrimaConfiguration};
+pub use prima::{Country, Environment, PrimaConfiguration};
 pub use test::TestConfiguration;
 
 /// A trait representing a valid configuration entity
