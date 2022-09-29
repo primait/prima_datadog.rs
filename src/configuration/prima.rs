@@ -97,6 +97,7 @@ impl Display for Environment {
 /// This is useful for enforcing rules based on country for every application that uses the library.
 #[derive(PartialEq, Debug, Clone)]
 pub enum Country {
+    Common,
     It,
     Es,
     Uk,
@@ -107,6 +108,7 @@ impl FromStr for Country {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "common" => Ok(Self::Common),
             "it" => Ok(Self::It),
             "es" => Ok(Self::Es),
             "uk" => Ok(Self::Uk),
@@ -118,6 +120,7 @@ impl FromStr for Country {
 impl Display for Country {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Country::Common => write!(f, "common"),
             Country::It => write!(f, "it"),
             Country::Es => write!(f, "es"),
             Country::Uk => write!(f, "uk"),
