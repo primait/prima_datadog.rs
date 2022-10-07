@@ -1,5 +1,5 @@
 /// Report the status of a service
-/// NOTE: avoid high tag cardinality. See note in lib docs!
+/// NOTE: Try to minimise variation in tag values (avoid things like timestamps or ids). See note in lib docs!
 #[macro_export]
 macro_rules! service_check {
     // call with literal and status
