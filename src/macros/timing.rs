@@ -1,4 +1,5 @@
 /// Send your own timing metric in milliseconds
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! timing {
     ($stat:expr, $ms:expr) => {

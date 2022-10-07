@@ -1,4 +1,5 @@
 /// Decrement a StatsD counter
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! decr {
     ($stat:expr) => {

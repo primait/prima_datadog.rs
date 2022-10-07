@@ -1,4 +1,5 @@
 /// Send a custom event as a title and a body
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! event {
     ($stat:path, $text:expr) => {

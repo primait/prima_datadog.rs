@@ -1,4 +1,5 @@
 /// Report an arbitrary value as a gauge
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! gauge {
     ($stat:expr, $val:expr) => {

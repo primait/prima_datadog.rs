@@ -1,4 +1,5 @@
 /// Report a value in a distribution
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! distribution {
     ($stat:expr, $val:expr) => {

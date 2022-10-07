@@ -1,4 +1,5 @@
 /// Report a value in a histogram
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! histogram {
     ($stat:expr, $val:expr) => {

@@ -101,7 +101,7 @@
 //! ## Note - Avoid high tag cardinality!
 //! It's important to avoid passing a large number of values for a given tag, as Datadog tracks each
 //! unique combination of tag values as a separate metric, which can significantly impact billing.
-//! For example, avoid passing things like user ID's, session ID's, request ID's, or other values that
+//! For example, avoid passing things like user IDs, session IDs, request IDs, or other values that
 //! vary significantly. See https://docs.datadoghq.com/getting_started/tagging/ for more information.
 //!
 //! ## References

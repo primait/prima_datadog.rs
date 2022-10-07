@@ -1,4 +1,5 @@
 /// Make an arbitrary change to a StatsD counter
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! count {
     ($stat:expr, $count:expr) => {

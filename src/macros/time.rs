@@ -1,4 +1,5 @@
 /// Time a block of code (reports in ms)
+/// NOTE: avoid high tag cardinality. See note in lib docs!
 #[macro_export]
 macro_rules! time {
     ($stat:expr, || $block:expr) => {
