@@ -1,4 +1,5 @@
 /// Increment a StatsD counter
+/// NOTE: Try to minimise variation in tag values (avoid things like timestamps or ids). See note in lib docs!
 #[macro_export]
 macro_rules! incr {
     ($stat:expr) => {
