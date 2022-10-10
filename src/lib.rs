@@ -464,11 +464,12 @@ impl Datadog {
                 hasher.write(t.as_bytes());
                 hasher.finish()
             })
-            .collect::<Vec<u64>>();
-        let mut seen_tags = self.tag_tracker.seen_tags.lock().unwrap();
-        seen_tags.extend(hashes);
-        let seen_tag_count = seen_tags.len();
-        drop(seen_tags);
+            .collect::<Vec<u64>>(); // Collect the hashes to avoid doing the hashing work inside the locked section
+        let seen_tag_count = {
+            let mut seen_tags = self.tag_tracker.seen_tags.lock().unwrap();
+            seen_tags.extend(hashes);
+            seen_tags.len()
+        };
         if seen_tag_count >= self.tag_tracker.warn_threshold
             && self
                 .tag_tracker
