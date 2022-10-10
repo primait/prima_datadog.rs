@@ -104,11 +104,21 @@
 //! For example, avoid passing things like user IDs, session IDs, request IDs, or other values that
 //! vary significantly. See https://docs.datadoghq.com/getting_started/tagging/ for more information.
 //!
+//! By default, prima_datadog will emit an event if a large number of unique tag values are seen, with
+//! the event title "prima_datadog_rs_tag_limit_exceeded". The threshold for this event to be emitted
+//! default to 100. Different thresholds may be set using PrimaConfiguration::with_tag_warn_threshold.
+//!
 //! ## References
 //!
 //!   - [Datadog docs](https://docs.datadoghq.com/getting_started/)
 //!   - [Getting started with Datadog tags](https://docs.datadoghq.com/getting_started/tagging/)
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
+
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
+use std::hash::Hasher;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
@@ -129,6 +139,7 @@ mod macros;
 mod tests;
 
 static INSTANCE: OnceCell<Datadog> = OnceCell::new();
+const TAG_LIMIT_EXCEEDED: &str = "prima_datadog_rs_tag_limit_exceeded";
 
 /// The Datadog struct is the main entry point for the library
 pub struct Datadog {
@@ -136,6 +147,18 @@ pub struct Datadog {
     client: Box<dyn DogstatsdClient + Send + Sync>,
     /// tells if metric should be reported. If false, nothing is sent to the udp socket.
     is_reporting_enabled: bool,
+    // Tracking for high tag cardinality
+    tag_tracker: TagTracker,
+}
+
+#[derive(Debug)]
+struct TagTracker {
+    // Store the hashes of the tags we've seen so far, to avoid having to store the full tag strings
+    seen_tags: Mutex<HashSet<u64>>,
+    // The limit of tag cardinality before we emit an event (this should be user configurable)
+    warn_threshold: usize,
+    // We only want to send the warning event once, so we track whether we've sent it
+    sent_event: AtomicBool,
 }
 
 impl Datadog {
@@ -156,7 +179,11 @@ impl Datadog {
             );
 
             let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;
-            Ok(Self::new(client, configuration.is_reporting_enabled()))
+            Ok(Self::new(
+                client,
+                configuration.is_reporting_enabled(),
+                configuration.tag_warn_threshold(),
+            ))
         })?;
 
         if initialized {
@@ -166,10 +193,19 @@ impl Datadog {
         }
     }
 
-    fn new(client: impl 'static + DogstatsdClient + Send + Sync, is_reporting_enabled: bool) -> Self {
+    fn new(
+        client: impl 'static + DogstatsdClient + Send + Sync,
+        is_reporting_enabled: bool,
+        tag_warn_threshold: usize,
+    ) -> Self {
         Self {
             client: Box::new(client),
             is_reporting_enabled,
+            tag_tracker: TagTracker {
+                seen_tags: Mutex::new(HashSet::new()),
+                warn_threshold: tag_warn_threshold,
+                sent_event: AtomicBool::new(false),
+            },
         }
     }
 
@@ -182,8 +218,10 @@ impl Datadog {
 
     pub(crate) fn do_incr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
-            self.client
-                .incr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.incr(metric, tags);
         }
     }
 
@@ -196,8 +234,10 @@ impl Datadog {
 
     pub(crate) fn do_decr(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
-            self.client
-                .decr(metric.as_ref(), tags.into_iter().collect::<Vec<String>>());
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.decr(metric, tags);
         }
     }
 
@@ -210,8 +250,10 @@ impl Datadog {
 
     pub(crate) fn do_count(&self, metric: impl AsRef<str>, count: i64, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
-            self.client
-                .count(metric.as_ref(), count, tags.into_iter().collect::<Vec<String>>());
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.count(metric, count, tags);
         }
     }
 
@@ -233,11 +275,10 @@ impl Datadog {
         block: impl FnOnce() + 'static,
     ) {
         if self.is_reporting_enabled {
-            self.client.time(
-                metric.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-                Box::new(block),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.time(metric, tags, Box::new(block));
         }
     }
 
@@ -250,8 +291,10 @@ impl Datadog {
 
     pub(crate) fn do_timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl IntoIterator<Item = String>) {
         if self.is_reporting_enabled {
-            self.client
-                .timing(metric.as_ref(), ms, tags.into_iter().collect::<Vec<String>>());
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.timing(metric, ms, tags);
         }
     }
 
@@ -273,11 +316,10 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         if self.is_reporting_enabled {
-            self.client.gauge(
-                metric.as_ref(),
-                value.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.gauge(metric, value.as_ref(), tags);
         }
     }
 
@@ -299,11 +341,10 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         if self.is_reporting_enabled {
-            self.client.histogram(
-                metric.as_ref(),
-                value.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.histogram(metric, value.as_ref(), tags);
         }
     }
 
@@ -325,11 +366,10 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         if self.is_reporting_enabled {
-            self.client.distribution(
-                metric.as_ref(),
-                value.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.distribution(metric, value.as_ref(), tags);
         }
     }
 
@@ -351,11 +391,10 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         if self.is_reporting_enabled {
-            self.client.set(
-                metric.as_ref(),
-                value.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.set(metric, value.as_ref(), tags);
         }
     }
 
@@ -384,12 +423,10 @@ impl Datadog {
         options: Option<ServiceCheckOptions>,
     ) {
         if self.is_reporting_enabled {
-            self.client.service_check(
-                metric.as_ref(),
-                value,
-                tags.into_iter().collect::<Vec<String>>(),
-                options,
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.service_check(metric, value, tags, options);
         }
     }
 
@@ -411,11 +448,35 @@ impl Datadog {
         tags: impl IntoIterator<Item = String>,
     ) {
         if self.is_reporting_enabled {
-            self.client.event(
-                metric.as_ref(),
-                text.as_ref(),
-                tags.into_iter().collect::<Vec<String>>(),
-            );
+            let tags = tags.into_iter().collect::<Vec<String>>();
+            let metric = metric.as_ref();
+            self.track_tags(metric, &tags);
+            self.client.event(metric, text.as_ref(), tags);
+        }
+    }
+
+    fn track_tags<'a>(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = &'a String>) {
+        let hashes = tags
+            .into_iter()
+            .map(|t| {
+                let mut hasher = DefaultHasher::new();
+                hasher.write(metric.as_ref().as_bytes());
+                hasher.write(t.as_bytes());
+                hasher.finish()
+            })
+            .collect::<Vec<u64>>();
+        let mut seen_tags = self.tag_tracker.seen_tags.lock().unwrap();
+        seen_tags.extend(hashes);
+        let seen_tag_count = seen_tags.len();
+        drop(seen_tags);
+        if seen_tag_count >= self.tag_tracker.warn_threshold
+            && self
+                .tag_tracker
+                .sent_event
+                .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+                .is_ok()
+        {
+            self.do_event(String::from(TAG_LIMIT_EXCEEDED), "Exceeded tag limit", vec![])
         }
     }
 }

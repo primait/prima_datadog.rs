@@ -12,6 +12,7 @@ pub struct PrimaConfiguration {
     namespace: String,
     environment: Environment,
     tags: Vec<String>,
+    tag_warn_threshold: usize,
 }
 
 impl PrimaConfiguration {
@@ -23,6 +24,9 @@ impl PrimaConfiguration {
             namespace: namespace.to_string(),
             environment,
             tags: vec![format!("env:{}", env_str)],
+            // See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
+            // 100 seems like a reasonable place to start warning for now. TODO: make this user configurable
+            tag_warn_threshold: 100,
         }
     }
 
@@ -33,6 +37,11 @@ impl PrimaConfiguration {
 
     pub fn with_country(self, country: Country) -> Self {
         self.with_tag("prima:country", &country)
+    }
+
+    pub fn with_tag_warn_threshold(mut self, threshold: usize) -> Self {
+        self.tag_warn_threshold = threshold;
+        self
     }
 }
 
@@ -55,6 +64,10 @@ impl Configuration for PrimaConfiguration {
 
     fn default_tags(&self) -> Vec<String> {
         self.tags.clone()
+    }
+
+    fn tag_warn_threshold(&self) -> usize {
+        self.tag_warn_threshold
     }
 }
 
