@@ -25,7 +25,7 @@ impl PrimaConfiguration {
             environment,
             tags: vec![format!("env:{}", env_str)],
             // See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
-            // 100 seems like a reasonable place to start warning for now. TODO: make this user configurable
+            // 100 seems like a reasonable place to start warning for now
             tag_warn_threshold: 100,
         }
     }

@@ -155,7 +155,7 @@ pub struct Datadog {
 struct TagTracker {
     // Store the hashes of the tags we've seen so far, to avoid having to store the full tag strings
     seen_tags: Mutex<HashSet<u64>>,
-    // The limit of tag cardinality before we emit an event (this should be user configurable)
+    // The limit of tag cardinality before we emit an event
     warn_threshold: usize,
     // We only want to send the warning event once, so we track whether we've sent it
     sent_event: AtomicBool,
