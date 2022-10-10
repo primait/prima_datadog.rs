@@ -11,30 +11,10 @@ fn incr_benchmark(c: &mut Criterion) {
         "prima_datadog_benchmarks",
         "dev".parse().unwrap(),
     )
-    .with_country(Country::It);
+    .with_country(Country::It)
+    .with_tag_warn_threshold(21);
     // 20 test tags to simulate a normal to heavily tagged metric
-    let tags = vec![
-        "1".to_string(),
-        "2".to_string(),
-        "3".to_string(),
-        "4".to_string(),
-        "5".to_string(),
-        "6".to_string(),
-        "7".to_string(),
-        "8".to_string(),
-        "9".to_string(),
-        "10".to_string(),
-        "11".to_string(),
-        "12".to_string(),
-        "13".to_string(),
-        "14".to_string(),
-        "15".to_string(),
-        "16".to_string(),
-        "17".to_string(),
-        "18".to_string(),
-        "19".to_string(),
-        "20".to_string(),
-    ];
+    let tags = (0..20).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
     Datadog::init(configuration).unwrap();
     c.bench_function("incr_benchmark", |b| {
         b.iter(|| {
@@ -44,5 +24,14 @@ fn incr_benchmark(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, incr_benchmark);
+fn incr_with_too_many_tags(c: &mut Criterion) {
+    let tags = (0..22).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
+    c.bench_function("incr_with_too_many_tags", |b| {
+        b.iter(|| {
+            Datadog::incr("test", tags.clone());
+        });
+    });
+}
+
+criterion_group!(benches, incr_benchmark, incr_with_too_many_tags);
 criterion_main!(benches);
