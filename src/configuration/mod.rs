@@ -6,6 +6,8 @@ mod test;
 pub use prima::{Country, Environment, PrimaConfiguration};
 pub use test::TestConfiguration;
 
+use crate::DEFAULT_TAG_THRESHOLD;
+
 /// A trait representing a valid configuration entity
 #[allow(clippy::wrong_self_convention)]
 pub trait Configuration {
@@ -22,7 +24,7 @@ pub trait Configuration {
     fn default_tags(&self) -> Vec<String>;
     /// Get the threshold at which to emit a warning event for high tag cardinality. Defaults to 100
     fn tag_warn_threshold(&self) -> usize {
-        100
+        DEFAULT_TAG_THRESHOLD
     }
 }
 

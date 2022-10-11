@@ -1,11 +1,12 @@
 use crate::tests::mocks;
 use crate::tests::TestEvent;
+use crate::DEFAULT_TAG_THRESHOLD;
 use crate::{Datadog, ServiceCheckOptions, ServiceStatus};
 
 #[test]
 pub fn service_check_with_literal() {
     let mock = mocks::service_check_mock("test", ServiceStatus::OK, &[], Some(ServiceCheckOptions::default()));
-    Datadog::new(mock, true, 100).do_service_check(
+    Datadog::new(mock, true, DEFAULT_TAG_THRESHOLD).do_service_check(
         "test",
         ServiceStatus::OK,
         vec![],
@@ -21,7 +22,7 @@ pub fn service_check_with_type() {
         &[],
         Some(ServiceCheckOptions::default()),
     );
-    Datadog::new(mock, true, 100).do_service_check(
+    Datadog::new(mock, true, DEFAULT_TAG_THRESHOLD).do_service_check(
         TestEvent::Test1,
         ServiceStatus::OK,
         vec![],
@@ -37,7 +38,7 @@ pub fn service_check_with_literal_and_tags() {
         &["added:tag", "env:test"],
         Some(ServiceCheckOptions::default()),
     );
-    Datadog::new(mock, true, 100).do_service_check(
+    Datadog::new(mock, true, DEFAULT_TAG_THRESHOLD).do_service_check(
         "test",
         ServiceStatus::OK,
         vec!["added:tag".to_string()],
@@ -48,7 +49,7 @@ pub fn service_check_with_literal_and_tags() {
 #[test]
 pub fn service_check_with_type_and_tags() {
     let mock = mocks::service_check_mock("test1_event", ServiceStatus::OK, &["added:tag", "env:test"], None);
-    Datadog::new(mock, true, 100).do_service_check(
+    Datadog::new(mock, true, DEFAULT_TAG_THRESHOLD).do_service_check(
         TestEvent::Test1,
         ServiceStatus::OK,
         vec!["added:tag".to_string()],

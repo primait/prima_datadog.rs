@@ -140,6 +140,9 @@ mod tests;
 
 static INSTANCE: OnceCell<Datadog> = OnceCell::new();
 const TAG_LIMIT_EXCEEDED: &str = "prima_datadog_rs_tag_limit_exceeded";
+/// See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
+/// 100 seems like a reasonable place to start warning for now
+pub const DEFAULT_TAG_THRESHOLD: usize = 100;
 
 /// The Datadog struct is the main entry point for the library
 pub struct Datadog {

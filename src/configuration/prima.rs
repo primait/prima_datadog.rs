@@ -2,6 +2,7 @@
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
+use crate::DEFAULT_TAG_THRESHOLD;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -24,9 +25,7 @@ impl PrimaConfiguration {
             namespace: namespace.to_string(),
             environment,
             tags: vec![format!("env:{}", env_str)],
-            // See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
-            // 100 seems like a reasonable place to start warning for now
-            tag_warn_threshold: 100,
+            tag_warn_threshold: DEFAULT_TAG_THRESHOLD,
         }
     }
 
