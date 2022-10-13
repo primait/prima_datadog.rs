@@ -115,9 +115,9 @@
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
 
 use std::collections::hash_map::DefaultHasher;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hasher;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Mutex;
 
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
@@ -156,8 +156,10 @@ pub struct Datadog {
 
 #[derive(Debug)]
 struct TagTracker {
-    // Store the hashes of the tags we've seen so far, to avoid having to store the full tag strings
-    seen_tags: Mutex<HashSet<u64>>,
+    // Store the set of tags we've seen for each metric, for reporting reasons
+    seen_metrics: Mutex<HashMap<String, HashSet<u64>>>,
+    // Store the total count of all metric:tag pairs
+    total_count: AtomicUsize,
     // The limit of tag cardinality before we emit an event
     warn_threshold: usize,
     // We only want to send the warning event once, so we track whether we've sent it
@@ -205,7 +207,8 @@ impl Datadog {
             client: Box::new(client),
             is_reporting_enabled,
             tag_tracker: TagTracker {
-                seen_tags: Mutex::new(HashSet::new()),
+                seen_metrics: Mutex::new(HashMap::new()),
+                total_count: AtomicUsize::new(0),
                 warn_threshold: tag_warn_threshold,
                 sent_event: AtomicBool::new(false),
             },
@@ -463,24 +466,37 @@ impl Datadog {
             .into_iter()
             .map(|t| {
                 let mut hasher = DefaultHasher::new();
-                hasher.write(metric.as_ref().as_bytes());
                 hasher.write(t.as_bytes());
                 hasher.finish()
             })
             .collect::<Vec<u64>>(); // Collect the hashes to avoid doing the hashing work inside the locked section
-        let seen_tag_count = {
-            let mut seen_tags = self.tag_tracker.seen_tags.lock().unwrap();
-            seen_tags.extend(hashes);
-            seen_tags.len()
+        let delta = {
+            let mut metrics = self.tag_tracker.seen_metrics.lock().unwrap();
+            let tags = metrics.entry(metric.as_ref().to_string()).or_insert_with(HashSet::new);
+            let before = tags.len();
+            tags.extend(hashes);
+            tags.len() - before
         };
-        if seen_tag_count >= self.tag_tracker.warn_threshold
+        let prev = self.tag_tracker.total_count.fetch_add(delta, Ordering::SeqCst);
+        if prev + delta >= self.tag_tracker.warn_threshold
             && self
                 .tag_tracker
                 .sent_event
                 .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
                 .is_ok()
         {
-            self.do_event(String::from(TAG_LIMIT_EXCEEDED), "Exceeded tag limit", vec![])
+            let message = {
+                let mut message = String::from("Exceeded tag cardinality limit. Metrics: ");
+                let metrics = self.tag_tracker.seen_metrics.lock().unwrap();
+                for entry in metrics.iter() {
+                    message += &format!("{}: {}, ", entry.0, entry.1.len());
+                }
+                // Remove the trailing comma and space. Safety: we know there is at least one metric or we wouldn't be over the threshold
+                message.truncate(message.len() - 2);
+                message
+            };
+            println!("{}", message);
+            self.do_event(String::from(TAG_LIMIT_EXCEEDED), message, vec![])
         }
     }
 }

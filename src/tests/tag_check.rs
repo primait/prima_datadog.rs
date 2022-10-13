@@ -6,10 +6,11 @@ use super::mocks::{expect_event, expect_incr, MockClient};
 #[test]
 pub fn check_event_sent_exactly_once() {
     let threshold = 7;
+    let message = "Exceeded tag cardinality limit. Metrics: test: 7";
     let mut mock = MockClient::new();
     for i in 0..100 {
         if i == threshold {
-            mock = expect_event(mock, crate::TAG_LIMIT_EXCEEDED, "Exceeded tag limit", vec![]);
+            mock = expect_event(mock, crate::TAG_LIMIT_EXCEEDED, &message, vec![]);
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
