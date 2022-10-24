@@ -33,7 +33,7 @@ struct TrackingState {
 
 impl Tracker {
     fn new(count_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
-        let state = if actions.len() > 0 {
+        let state = if !actions.is_empty() {
             TrackerState::Tracking(TrackingState {
                 seen: HashMap::new(),
                 custom_metric_count: 0,
@@ -48,7 +48,7 @@ impl Tracker {
         }
     }
 
-    pub(crate) fn track<'a>(&self, dd: &Datadog, metric: &str, tags: &Vec<String>) {
+    pub(crate) fn track(&self, dd: &Datadog, metric: &str, tags: &[String]) {
         let mut state = self.state.lock().unwrap();
         // I know this is spooky, but it lets me move out of the mutex guard, which I want to do
         // so I have the option of moving the inner of TrackerState::Tracking into do_actions
@@ -65,11 +65,11 @@ impl Tracker {
         }
     }
 
-    fn update(&self, state: &mut TrackingState, metric: &str, tags: &Vec<String>) {
+    fn update(&self, state: &mut TrackingState, metric: &str, tags: &[String]) {
         let seen_tag_sets = state.seen.entry(metric.to_string()).or_default();
         // This cloning is a little sad but necessary for the eq check we do next to be efficient.
         // We'd have to clone regardless if the tag set was novel, but that should be rare so it's still unfortunate.
-        let new_tag_set = tags.into_iter().cloned().collect::<HashSet<_>>();
+        let new_tag_set = tags.iter().cloned().collect::<HashSet<_>>();
         let set_is_novel = seen_tag_sets.iter().all(|seen| !seen.eq(&new_tag_set));
         if set_is_novel {
             seen_tag_sets.push(new_tag_set);
@@ -77,14 +77,14 @@ impl Tracker {
         }
     }
 
-    fn do_actions(&self, dd: &Datadog, metric: &str, tags: &Vec<String>, state: TrackingState) {
+    fn do_actions(&self, dd: &Datadog, metric: &str, tags: &[String], state: TrackingState) {
         let mut actions = self.actions.lock().unwrap();
-        let old_actions = std::mem::replace(&mut *actions, Vec::new());
+        let old_actions = std::mem::take(&mut *actions);
         for action in old_actions {
             match action {
                 ThresholdAction::Event(title, text) => dd.do_event(title, text, self.generate_event_tags(&state)),
                 ThresholdAction::Custom(mut action) => {
-                    action(metric.to_string(), tags.clone());
+                    action(metric.to_string(), tags.to_owned());
                 }
             }
         }
@@ -113,6 +113,15 @@ enum ThresholdAction {
 pub struct TrackerConfiguration {
     count_threshold: usize,
     actions: Vec<ThresholdAction>,
+}
+
+impl Default for TrackerConfiguration {
+    fn default() -> Self {
+        Self {
+            count_threshold: DEFAULT_TAG_THRESHOLD,
+            actions: Vec::new(),
+        }
+    }
 }
 
 impl TrackerConfiguration {
