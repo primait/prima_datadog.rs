@@ -114,17 +114,12 @@
 //!   - [Getting started with Datadog tags](https://docs.datadoghq.com/getting_started/tagging/)
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
 
-use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashMap, HashSet};
-use std::hash::Hasher;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::Mutex;
-
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
 pub use macros::*;
+pub use tracker::*;
 
 use crate::configuration::Configuration;
 use crate::error::Error;
@@ -133,16 +128,13 @@ mod client;
 pub mod configuration;
 pub mod error;
 mod macros;
+pub mod tracker;
 
 #[cfg(test)]
 #[path = "tests/mod.rs"]
 mod tests;
 
 static INSTANCE: OnceCell<Datadog> = OnceCell::new();
-const TAG_LIMIT_EXCEEDED: &str = "prima_datadog_rs_tag_limit_exceeded";
-/// See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
-/// 100 seems like a reasonable place to start warning for now
-pub const DEFAULT_TAG_THRESHOLD: usize = 100;
 
 /// The Datadog struct is the main entry point for the library
 pub struct Datadog {
@@ -151,25 +143,13 @@ pub struct Datadog {
     /// tells if metric should be reported. If false, nothing is sent to the udp socket.
     is_reporting_enabled: bool,
     // Tracking for high tag cardinality
-    tag_tracker: TagTracker,
-}
-
-#[derive(Debug)]
-struct TagTracker {
-    // Store the set of tags we've seen for each metric, for reporting reasons
-    seen_metrics: Mutex<HashMap<String, HashSet<u64>>>,
-    // Store the total count of all metric:tag pairs
-    total_count: AtomicUsize,
-    // The limit of tag cardinality before we emit an event
-    warn_threshold: usize,
-    // We only want to send the warning event once, so we track whether we've sent it
-    sent_event: AtomicBool,
+    tag_tracker: Tracker,
 }
 
 impl Datadog {
     /// Initializes a Datadog instance with a struct that implements the [Configuration] trait.
     /// Make sure that you run it only once otherwise you will get an error.
-    pub fn init(configuration: impl Configuration) -> Result<(), Error> {
+    pub fn init(mut configuration: impl Configuration) -> Result<(), Error> {
         let mut initialized: bool = false;
 
         // the closure is guaranteed to execute only once
@@ -187,7 +167,7 @@ impl Datadog {
             Ok(Self::new(
                 client,
                 configuration.is_reporting_enabled(),
-                configuration.tag_warn_threshold(),
+                configuration.take_tracker_config(),
             ))
         })?;
 
@@ -201,17 +181,12 @@ impl Datadog {
     fn new(
         client: impl 'static + DogstatsdClient + Send + Sync,
         is_reporting_enabled: bool,
-        tag_warn_threshold: usize,
+        tracker_config: TrackerConfiguration,
     ) -> Self {
         Self {
             client: Box::new(client),
             is_reporting_enabled,
-            tag_tracker: TagTracker {
-                seen_metrics: Mutex::new(HashMap::new()),
-                total_count: AtomicUsize::new(0),
-                warn_threshold: tag_warn_threshold,
-                sent_event: AtomicBool::new(false),
-            },
+            tag_tracker: tracker_config.build(),
         }
     }
 
@@ -226,7 +201,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.incr(metric, tags);
         }
     }
@@ -242,7 +217,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.decr(metric, tags);
         }
     }
@@ -258,7 +233,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.count(metric, count, tags);
         }
     }
@@ -283,7 +258,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.time(metric, tags, Box::new(block));
         }
     }
@@ -299,7 +274,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.timing(metric, ms, tags);
         }
     }
@@ -324,7 +299,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.gauge(metric, value.as_ref(), tags);
         }
     }
@@ -349,7 +324,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.histogram(metric, value.as_ref(), tags);
         }
     }
@@ -374,7 +349,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.distribution(metric, value.as_ref(), tags);
         }
     }
@@ -399,7 +374,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.set(metric, value.as_ref(), tags);
         }
     }
@@ -431,7 +406,7 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.service_check(metric, value, tags, options);
         }
     }
@@ -456,47 +431,8 @@ impl Datadog {
         if self.is_reporting_enabled {
             let tags = tags.into_iter().collect::<Vec<String>>();
             let metric = metric.as_ref();
-            self.track_tags(metric, &tags);
+            self.tag_tracker.track(self, metric, &tags);
             self.client.event(metric, text.as_ref(), tags);
-        }
-    }
-
-    fn track_tags<'a>(&self, metric: impl AsRef<str>, tags: impl IntoIterator<Item = &'a String>) {
-        let hashes = tags
-            .into_iter()
-            .map(|t| {
-                let mut hasher = DefaultHasher::new();
-                hasher.write(t.as_bytes());
-                hasher.finish()
-            })
-            .collect::<Vec<u64>>(); // Collect the hashes to avoid doing the hashing work inside the locked section
-        let delta = {
-            let mut metrics = self.tag_tracker.seen_metrics.lock().unwrap();
-            let tags = metrics.entry(metric.as_ref().to_string()).or_insert_with(HashSet::new);
-            let before = tags.len();
-            tags.extend(hashes);
-            tags.len() - before
-        };
-        let prev = self.tag_tracker.total_count.fetch_add(delta, Ordering::SeqCst);
-        if prev + delta >= self.tag_tracker.warn_threshold
-            && self
-                .tag_tracker
-                .sent_event
-                .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-                .is_ok()
-        {
-            let message = {
-                let mut message = String::from("Exceeded tag cardinality limit. Metrics: ");
-                let metrics = self.tag_tracker.seen_metrics.lock().unwrap();
-                for entry in metrics.iter() {
-                    message += &format!("{}: {}, ", entry.0, entry.1.len());
-                }
-                // Remove the trailing comma and space. Safety: we know there is at least one metric or we wouldn't be over the threshold
-                message.truncate(message.len() - 2);
-                message
-            };
-            println!("{}", message);
-            self.do_event(String::from(TAG_LIMIT_EXCEEDED), message, vec![])
         }
     }
 }

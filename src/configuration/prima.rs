@@ -2,7 +2,7 @@
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
-use crate::DEFAULT_TAG_THRESHOLD;
+use crate::TrackerConfiguration;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -13,7 +13,7 @@ pub struct PrimaConfiguration {
     namespace: String,
     environment: Environment,
     tags: Vec<String>,
-    tag_warn_threshold: usize,
+    tracker: TrackerConfiguration,
 }
 
 impl PrimaConfiguration {
@@ -25,7 +25,7 @@ impl PrimaConfiguration {
             namespace: namespace.to_string(),
             environment,
             tags: vec![format!("env:{}", env_str)],
-            tag_warn_threshold: DEFAULT_TAG_THRESHOLD,
+            tracker: TrackerConfiguration::new(),
         }
     }
 
@@ -38,8 +38,8 @@ impl PrimaConfiguration {
         self.with_tag("prima:country", &country)
     }
 
-    pub fn with_tag_warn_threshold(mut self, threshold: usize) -> Self {
-        self.tag_warn_threshold = threshold;
+    pub fn with_tracker(mut self, tracker: TrackerConfiguration) -> Self {
+        self.tracker = tracker;
         self
     }
 }
@@ -65,8 +65,8 @@ impl Configuration for PrimaConfiguration {
         self.tags.clone()
     }
 
-    fn tag_warn_threshold(&self) -> usize {
-        self.tag_warn_threshold
+    fn take_tracker_config(&mut self) -> TrackerConfiguration {
+        std::mem::replace(&mut self.tracker, TrackerConfiguration::new())
     }
 }
 

@@ -15,6 +15,7 @@ mod set;
 mod tag_check;
 mod time;
 mod timing;
+mod tracker;
 
 #[test]
 pub fn double_initialization() {

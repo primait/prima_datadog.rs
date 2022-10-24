@@ -1,10 +1,14 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use prima_datadog::{
     configuration::{Country, PrimaConfiguration},
-    Datadog,
+    Datadog, TrackerConfiguration,
 };
 
 fn incr_benchmark(c: &mut Criterion) {
+    // The custom action will do nothing, but does force tracking to occur
+    let tracker_config = TrackerConfiguration::new()
+        .with_threshold(21)
+        .with_custom(Box::new(|_, _| {}));
     let configuration = PrimaConfiguration::new(
         "0.0.0.0:1234",
         "0.0.0.0:0",
@@ -12,7 +16,7 @@ fn incr_benchmark(c: &mut Criterion) {
         "dev".parse().unwrap(),
     )
     .with_country(Country::It)
-    .with_tag_warn_threshold(21);
+    .with_tracker(tracker_config);
     // 20 test tags to simulate a normal to heavily tagged metric
     let tags = (0..20).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
     Datadog::init(configuration).unwrap();

@@ -261,7 +261,9 @@ pub fn expect_event(
         .with(
             eq(metric),
             eq(text),
-            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(tag))),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(tag)) && called_tags.len() == tags.len()
+            }),
         )
         .return_const(());
 
