@@ -23,7 +23,7 @@ pub trait DogstatsdClient {
         I: IntoIterator<Item = S>;
 
     /// Time how long it takes for a block of code to execute
-    fn time<S, I>(&self, metric: &str, tags: I, block: Box<dyn FnOnce()>)
+    fn time<S, I>(&self, metric: &str, tags: I, block: impl FnOnce())
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>;
@@ -96,7 +96,7 @@ impl DogstatsdClient for dogstatsd::Client {
         let _ = self.count(metric, count, tags);
     }
 
-    fn time<S, I>(&self, metric: &str, tags: I, block: Box<dyn FnOnce()>)
+    fn time<S, I>(&self, metric: &str, tags: I, block: impl FnOnce())
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,

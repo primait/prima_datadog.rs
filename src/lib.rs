@@ -218,15 +218,15 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
     }
 
     /// Time a block of code (reports in ms)
-    pub fn time(metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce() + 'static) {
+    pub fn time(metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce()) {
         if let Some(instance) = INSTANCE.get() {
-            instance.do_time(metric.as_ref(), tags, Box::new(block));
+            instance.do_time(metric.as_ref(), tags, block);
         }
     }
 
-    pub(crate) fn do_time(&self, metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce() + 'static) {
+    pub(crate) fn do_time(&self, metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce()) {
         if self.is_reporting_enabled {
-            self.client.time(metric.as_ref(), tags, Box::new(block));
+            self.client.time(metric.as_ref(), tags, block);
         }
     }
 

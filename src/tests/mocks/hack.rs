@@ -6,7 +6,7 @@ pub(super) trait MockDogstatsdClient {
     fn incr(&self, metric: &str, tags: Vec<String>);
     fn decr(&self, metric: &str, tags: Vec<String>);
     fn count(&self, metric: &str, count: i64, tags: Vec<String>);
-    fn time(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce()>);
+    fn time<'a>(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce() + 'a>);
     fn timing(&self, metric: &str, ms: i64, tags: Vec<String>);
     fn gauge(&self, metric: &str, val: &str, tags: Vec<String>);
     fn histogram(&self, metric: &str, val: &str, tags: Vec<String>);
@@ -45,7 +45,7 @@ impl<C: MockDogstatsdClient> DogstatsdClient for C {
         )
     }
 
-    fn time<S, I>(&self, metric: &str, tags: I, block: Box<dyn FnOnce()>)
+    fn time<S, I>(&self, metric: &str, tags: I, block: impl FnOnce())
     where
         S: AsRef<str>,
         I: IntoIterator<Item = S>,
@@ -54,7 +54,7 @@ impl<C: MockDogstatsdClient> DogstatsdClient for C {
             self,
             metric,
             tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
-            block,
+            Box::new(block),
         )
     }
 
