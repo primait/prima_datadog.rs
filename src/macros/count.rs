@@ -3,15 +3,15 @@
 #[macro_export]
 macro_rules! count {
     ($stat:expr, $count:expr) => {
-        $crate::Datadog::count($stat, $count, vec![]);
+        $crate::Datadog::count($stat, $count, &[]);
     };
     ($stat:path, $count:expr) => {
-        $crate::Datadog::count($stat.as_ref(), $count, vec![]);
+        $crate::Datadog::count($stat.as_ref(), $count, &[]);
     };
     ($stat:expr, $count:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::count($stat, $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::count($stat, $count, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $count:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::count($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::count($stat.as_ref(), $count, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

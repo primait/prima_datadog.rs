@@ -3,15 +3,15 @@
 #[macro_export]
 macro_rules! set {
     ($stat:expr, $val:expr) => {
-        $crate::Datadog::set($stat, $val, vec![]);
+        $crate::Datadog::set($stat, $val, &[]);
     };
     ($stat:path, $val:expr) => {
-        $crate::Datadog::set($stat.as_ref(), $val, vec![]);
+        $crate::Datadog::set($stat.as_ref(), $val, &[]);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::set($stat, $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::set($stat, $val, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::set($stat.as_ref(), $val, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::set($stat.as_ref(), $val, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

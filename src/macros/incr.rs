@@ -3,15 +3,15 @@
 #[macro_export]
 macro_rules! incr {
     ($stat:expr) => {
-        $crate::Datadog::incr($stat, vec![]);
+        $crate::Datadog::incr($stat, &[]);
     };
     ($stat:path) => {
-        $crate::Datadog::incr($stat.as_ref(), vec![]);
+        $crate::Datadog::incr($stat.as_ref(), &[]);
     };
     ($stat:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::incr($stat, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat.as_ref(), std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::incr($stat.as_ref(), &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }
