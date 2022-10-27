@@ -9,15 +9,15 @@ macro_rules! distribution {
         $crate::Datadog::distribution($stat.as_ref(), $val, &[]);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::distribution($stat, $val, &[$(std::concat!($key, ":", $value)), *]);
+        $crate::Datadog::distribution($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $val:expr; $( $key:literal => $value:literal ), *) => {
-        $crate::Datadog::distribution($stat.as_ref(), $val, &[$(std::concat!($key, ":", $value)), *]);
+        $crate::Datadog::distribution($stat.as_ref(), $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::distribution($stat, $val, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::distribution($stat, $val, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::distribution($stat.as_ref(), $val, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::distribution($stat.as_ref(), $val, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

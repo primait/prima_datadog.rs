@@ -9,15 +9,15 @@ macro_rules! incr {
         $crate::Datadog::incr($stat.as_ref(), &[]);
     };
     ($stat:expr; $( $key:literal => $value:literal ), *) => {
-        $crate::Datadog::incr($stat, &[$(std::concat!($key, ":", $value)), *]);
+        $crate::Datadog::incr($stat, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path; $( $key:literal => $value:literal ), *) => {
-        $crate::Datadog::incr($stat.as_ref(), &[$(std::concat!($key, ":", $value)), *]);
+        $crate::Datadog::incr($stat.as_ref(), &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::incr($stat, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat.as_ref(), &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::incr($stat.as_ref(), &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }
