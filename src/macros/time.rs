@@ -14,6 +14,18 @@ macro_rules! time {
     ($stat:path, move || $block:expr) => {
         $crate::Datadog::time($stat.as_ref(), &[], || $block);
     };
+    ($stat:expr, || $block:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::time($stat, &[$(std::concat!($key, ":", $value)), *], || $block);
+    };
+    ($stat:expr, move || $block:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::time($stat, &[$(std::concat!($key, ":", $value)), *], || $block);
+    };
+    ($stat:path, || $block:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::time($stat.as_ref(), $count, &[$(std::concat!($key, ":", $value)), *], || $block);
+    };
+    ($stat:path, move || $block:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::time($stat.as_ref(), $count, &[$(std::concat!($key, ":", $value)), *], || $block);
+    };
     ($stat:expr, || $block:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::time($stat, &[$(std::format!("{}:{}", $key, $value).as_str()), *], || $block);
     };

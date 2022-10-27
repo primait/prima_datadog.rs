@@ -8,6 +8,12 @@ macro_rules! decr {
     ($stat:path) => {
         $crate::Datadog::decr($stat.as_ref(), &[]);
     };
+    ($stat:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::decr($stat, &[$(std::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::decr($stat.as_ref(), &[$(std::concat!($key, ":", $value)), *]);
+    };
     ($stat:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::decr($stat, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };

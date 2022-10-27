@@ -9,6 +9,12 @@ macro_rules! timing {
         $crate::Datadog::timing($stat.as_ref(), $ms, &[]);
     };
     ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
+        $crate::Datadog::timing($stat, $ms, &[$(std::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path, $ms:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::timing($stat.as_ref(), $ms, &[$(std::concat!($key, ":", $value)), *]);
+    };
+    ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::timing($stat, $ms, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $ms:expr; $( $key:expr => $value:expr ), *) => {

@@ -8,6 +8,12 @@ macro_rules! count {
     ($stat:path, $count:expr) => {
         $crate::Datadog::count($stat.as_ref(), $count, &[]);
     };
+    ($stat:expr, $count:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::count($stat, $count, &[$(std::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path, $count:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::count($stat.as_ref(), $count, &[$(std::concat!($key, ":", $value)), *]);
+    };
     ($stat:expr, $count:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::count($stat, $count, &[$(std::format!("{}:{}", $key, $value).as_str()), *]);
     };
