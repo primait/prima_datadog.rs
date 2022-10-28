@@ -3,10 +3,10 @@
 #[macro_export]
 macro_rules! set {
     ($stat:expr, $val:expr) => {
-        $crate::Datadog::set($stat, $val, &[]);
+        $crate::Datadog::set($stat, $val, $crate::EMPTY_TAGS);
     };
     ($stat:path, $val:expr) => {
-        $crate::Datadog::set($stat.as_ref(), $val, &[]);
+        $crate::Datadog::set($stat.as_ref(), $val, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::set($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);

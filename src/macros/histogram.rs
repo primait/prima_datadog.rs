@@ -3,10 +3,10 @@
 #[macro_export]
 macro_rules! histogram {
     ($stat:expr, $val:expr) => {
-        $crate::Datadog::histogram($stat, $val, &[]);
+        $crate::Datadog::histogram($stat, $val, $crate::EMPTY_TAGS);
     };
     ($stat:path, $val:expr) => {
-        $crate::Datadog::histogram($stat.as_ref(), $val, &[]);
+        $crate::Datadog::histogram($stat.as_ref(), $val, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::histogram($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);

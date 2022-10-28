@@ -3,16 +3,16 @@
 #[macro_export]
 macro_rules! time {
     ($stat:expr, || $block:expr) => {
-        $crate::Datadog::time($stat, &[], || $block);
+        $crate::Datadog::time($stat, $crate::EMPTY_TAGS, || $block);
     };
     ($stat:expr, move || $block:expr) => {
-        $crate::Datadog::time($stat, &[], || $block);
+        $crate::Datadog::time($stat, $crate::EMPTY_TAGS, || $block);
     };
     ($stat:path, || $block:expr) => {
-        $crate::Datadog::time($stat.as_ref(), &[], || $block);
+        $crate::Datadog::time($stat.as_ref(), $crate::EMPTY_TAGS, || $block);
     };
     ($stat:path, move || $block:expr) => {
-        $crate::Datadog::time($stat.as_ref(), &[], || $block);
+        $crate::Datadog::time($stat.as_ref(), $crate::EMPTY_TAGS, || $block);
     };
     ($stat:expr, || $block:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::time($stat, &[$(::core::concat!($key, ":", $value)), *], || $block);

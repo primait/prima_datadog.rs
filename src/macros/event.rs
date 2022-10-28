@@ -3,10 +3,10 @@
 #[macro_export]
 macro_rules! event {
     ($stat:path, $text:expr) => {
-        $crate::Datadog::event($stat.as_ref(), $text, &[]);
+        $crate::Datadog::event($stat.as_ref(), $text, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $text:expr) => {
-        $crate::Datadog::event($stat, $text, &[]);
+        $crate::Datadog::event($stat, $text, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $text:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::event($stat, $text, &[$(::core::concat!($key, ":", $value)), *]);

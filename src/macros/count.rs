@@ -3,10 +3,10 @@
 #[macro_export]
 macro_rules! count {
     ($stat:expr, $count:expr) => {
-        $crate::Datadog::count($stat, $count, &[]);
+        $crate::Datadog::count($stat, $count, $crate::EMPTY_TAGS);
     };
     ($stat:path, $count:expr) => {
-        $crate::Datadog::count($stat.as_ref(), $count, &[]);
+        $crate::Datadog::count($stat.as_ref(), $count, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $count:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::count($stat, $count, &[$(::core::concat!($key, ":", $value)), *]);

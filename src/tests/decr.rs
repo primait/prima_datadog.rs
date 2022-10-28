@@ -1,17 +1,18 @@
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::DatadogWrapper;
+use crate::EMPTY_TAGS;
 
 #[test]
 pub fn decr_with_literal() {
-    let mock = mocks::decr_mock("test", &[]);
-    DatadogWrapper::new(mock, true).do_decr("test", &[]);
+    let mock = mocks::decr_mock("test", EMPTY_TAGS);
+    DatadogWrapper::new(mock, true).do_decr("test", EMPTY_TAGS);
 }
 
 #[test]
 pub fn decr_with_type() {
-    let mock = mocks::decr_mock("test1_event", &[]);
-    DatadogWrapper::new(mock, true).do_decr(TestEvent::Test1, &[]);
+    let mock = mocks::decr_mock("test1_event", EMPTY_TAGS);
+    DatadogWrapper::new(mock, true).do_decr(TestEvent::Test1, EMPTY_TAGS);
 }
 
 #[test]

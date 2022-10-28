@@ -128,6 +128,29 @@ mod macros;
 #[path = "tests/mod.rs"]
 mod tests;
 
+/// Types that can provide an iterator of tags for a metric.
+///
+/// This is automatically implemented for anything that implements `IntoIterator<Item = S>` where `S: AsRef<str>`.
+///
+/// In other words, you can pass a `&[&str]` (best), `Vec<&str>`, `&[String]`, `Vec<String>`, `&[Cow<str>]`, `Vec<Cow<str>>`, etc.
+pub trait TagsProvider: IntoIterator<Item = Self::Tag> {
+    type Tag: AsRef<str>;
+}
+impl<I, S> TagsProvider for I
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    type Tag = S;
+}
+
+/// Helper constant for passing no tags to a metric.
+///
+/// This is a workaround for passing in `&[]` as a tag list, which is not
+/// possible due to type inference rules as the compiler can't work out
+/// the type inside the empty slice.
+pub const EMPTY_TAGS: &[&str] = &[];
+
 /// The Datadog type is the main entry point for the library
 pub type Datadog = DatadogWrapper<dogstatsd::Client>;
 
@@ -179,117 +202,117 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
     }
 
     /// Increment a StatsD counter
-    pub fn incr(metric: impl AsRef<str>, tags: &[&str]) {
+    pub fn incr(metric: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_incr(metric.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_incr(&self, metric: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_incr(&self, metric: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.incr(metric.as_ref(), tags);
         }
     }
 
     /// Decrement a StatsD counter
-    pub fn decr(metric: impl AsRef<str>, tags: &[&str]) {
+    pub fn decr(metric: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_decr(metric.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_decr(&self, metric: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_decr(&self, metric: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.decr(metric.as_ref(), tags);
         }
     }
 
     /// Make an arbitrary change to a StatsD counter
-    pub fn count(metric: impl AsRef<str>, count: i64, tags: &[&str]) {
+    pub fn count(metric: impl AsRef<str>, count: i64, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_count(metric.as_ref(), count, tags);
         }
     }
 
-    pub(crate) fn do_count(&self, metric: impl AsRef<str>, count: i64, tags: &[&str]) {
+    pub(crate) fn do_count(&self, metric: impl AsRef<str>, count: i64, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.count(metric.as_ref(), count, tags);
         }
     }
 
     /// Time a block of code (reports in ms)
-    pub fn time(metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce()) {
+    pub fn time(metric: impl AsRef<str>, tags: impl TagsProvider, block: impl FnOnce()) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_time(metric.as_ref(), tags, block);
         }
     }
 
-    pub(crate) fn do_time(&self, metric: impl AsRef<str>, tags: &[&str], block: impl FnOnce()) {
+    pub(crate) fn do_time(&self, metric: impl AsRef<str>, tags: impl TagsProvider, block: impl FnOnce()) {
         if self.is_reporting_enabled {
             self.client.time(metric.as_ref(), tags, block);
         }
     }
 
     /// Send your own timing metric in milliseconds
-    pub fn timing(metric: impl AsRef<str>, ms: i64, tags: &[&str]) {
+    pub fn timing(metric: impl AsRef<str>, ms: i64, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_timing(metric.as_ref(), ms, tags);
         }
     }
 
-    pub(crate) fn do_timing(&self, metric: impl AsRef<str>, ms: i64, tags: &[&str]) {
+    pub(crate) fn do_timing(&self, metric: impl AsRef<str>, ms: i64, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.timing(metric.as_ref(), ms, tags);
         }
     }
 
     /// Report an arbitrary value as a gauge
-    pub fn gauge(metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub fn gauge(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_gauge(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_gauge(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_gauge(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.gauge(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
     /// Report a value in a histogram
-    pub fn histogram(metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub fn histogram(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_histogram(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_histogram(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_histogram(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.histogram(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
     /// Report a value in a distribution
-    pub fn distribution(metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub fn distribution(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_distribution(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_distribution(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_distribution(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.distribution(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
     /// Report a value in a set
-    pub fn set(metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub fn set(metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_set(metric.as_ref(), value.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_set(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_set(&self, metric: impl AsRef<str>, value: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.set(metric.as_ref(), value.as_ref(), tags);
         }
@@ -299,7 +322,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
     pub fn service_check(
         metric: impl AsRef<str>,
         value: ServiceStatus,
-        tags: &[&str],
+        tags: impl TagsProvider,
         options: Option<ServiceCheckOptions>,
     ) {
         if let Some(instance) = INSTANCE.get() {
@@ -311,7 +334,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
         &self,
         metric: impl AsRef<str>,
         value: ServiceStatus,
-        tags: &[&str],
+        tags: impl TagsProvider,
         options: Option<ServiceCheckOptions>,
     ) {
         if self.is_reporting_enabled {
@@ -320,13 +343,13 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
     }
 
     /// Send a custom event as a title and a body
-    pub fn event(metric: impl AsRef<str>, text: impl AsRef<str>, tags: &[&str]) {
+    pub fn event(metric: impl AsRef<str>, text: impl AsRef<str>, tags: impl TagsProvider) {
         if let Some(instance) = INSTANCE.get() {
             instance.do_event(metric.as_ref(), text.as_ref(), tags);
         }
     }
 
-    pub(crate) fn do_event(&self, metric: impl AsRef<str>, text: impl AsRef<str>, tags: &[&str]) {
+    pub(crate) fn do_event(&self, metric: impl AsRef<str>, text: impl AsRef<str>, tags: impl TagsProvider) {
         if self.is_reporting_enabled {
             self.client.event(metric.as_ref(), text.as_ref(), tags);
         }

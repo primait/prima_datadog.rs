@@ -4,17 +4,17 @@
 macro_rules! service_check {
     // call with literal and status
     ($stat:expr, $service_status:path) => {
-        $crate::Datadog::service_check($stat, $service_status, &[], None);
+        $crate::Datadog::service_check($stat, $service_status, $crate::EMPTY_TAGS, None);
     };
     ($stat:expr, $service_status:path, $options: expr) => {
-        $crate::Datadog::service_check($stat, $service_status, &[], Some($options));
+        $crate::Datadog::service_check($stat, $service_status, $crate::EMPTY_TAGS, Some($options));
     };
     // call with path, status and options
     ($stat:path, $service_status:path) => {
-        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[], None);
+        $crate::Datadog::service_check($stat.as_ref(), $service_status, $crate::EMPTY_TAGS, None);
     };
     ($stat:path, $service_status:path, $options: expr) => {
-        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[], Some($options));
+        $crate::Datadog::service_check($stat.as_ref(), $service_status, $crate::EMPTY_TAGS, Some($options));
     };
     // call with literal, status, options and tags
     ($stat:expr, $service_status:path; $( $key:literal => $value:literal ), *) => {
