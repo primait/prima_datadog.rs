@@ -15,9 +15,9 @@ macro_rules! timing {
         $crate::Datadog::timing($stat.as_ref(), $ms, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::timing($stat, $ms, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::timing($stat, $ms, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $ms:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::timing($stat.as_ref(), $ms, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::timing($stat.as_ref(), $ms, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

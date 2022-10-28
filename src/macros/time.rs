@@ -27,15 +27,15 @@ macro_rules! time {
         $crate::Datadog::time($stat.as_ref(), $count, &[$(::core::concat!($key, ":", $value)), *], || $block);
     };
     ($stat:expr, || $block:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::time($stat, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], || $block);
+        $crate::Datadog::time($stat, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], || $block);
     };
     ($stat:expr, move || $block:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::time($stat, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], || $block);
+        $crate::Datadog::time($stat, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], || $block);
     };
     ($stat:path, || $block:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::time($stat.as_ref(), $count, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], || $block);
+        $crate::Datadog::time($stat.as_ref(), $count, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], || $block);
     };
     ($stat:path, move || $block:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::time($stat.as_ref(), $count, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], || $block);
+        $crate::Datadog::time($stat.as_ref(), $count, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], || $block);
     };
 }

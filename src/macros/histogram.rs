@@ -15,9 +15,9 @@ macro_rules! histogram {
         $crate::Datadog::histogram($stat.as_ref(), $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::histogram($stat, $val, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::histogram($stat, $val, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $val:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::histogram($stat.as_ref(), $val, &[$(::core::format!("{}:{}", $key, $value).as_str()), *]);
+        $crate::Datadog::histogram($stat.as_ref(), $val, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

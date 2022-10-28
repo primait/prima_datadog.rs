@@ -32,16 +32,16 @@ macro_rules! service_check {
     };
     // call with literal, status, options and tags
     ($stat:expr, $service_status:path; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::service_check($stat, $service_status, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], None);
+        $crate::Datadog::service_check($stat, $service_status, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], None);
     };
     ($stat:expr, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::service_check($stat, $service_status, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], Some($options));
+        $crate::Datadog::service_check($stat, $service_status, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], Some($options));
     };
     // call with path, status, options and tags
     ($stat:path, $service_status:path; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], None);
+        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], None);
     };
     ($stat:path, $service_status:path, $options: expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[$(::core::format!("{}:{}", $key, $value).as_str()), *], Some($options));
+        $crate::Datadog::service_check($stat.as_ref(), $service_status, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], Some($options));
     };
 }
