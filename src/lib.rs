@@ -133,6 +133,8 @@ mod tests;
 /// This is automatically implemented for anything that implements `IntoIterator<Item = S>` where `S: AsRef<str>`.
 ///
 /// In other words, you can pass a `&[&str]` (best), `Vec<&str>`, `&[String]`, `Vec<String>`, `&[Cow<str>]`, `Vec<Cow<str>>`, etc.
+///
+/// **If you'd like to pass in empty tags, use the [EMPTY_TAGS] constant.**
 pub trait TagsProvider: IntoIterator<Item = Self::Tag> {
     type Tag: AsRef<str>;
 }
