@@ -141,7 +141,7 @@ enum ThresholdAction {
     Custom(ThresholdCustomAction),
 }
 
-pub type ThresholdCustomAction = Box<dyn for<'a> FnMut(&'a str, &'a [String]) + Send + Sync>;
+type ThresholdCustomAction = Box<dyn for<'a> FnMut(&'a str, &'a [String]) + Send + Sync>;
 
 pub struct TagTrackerConfiguration {
     count_threshold: usize,
@@ -175,7 +175,7 @@ impl TagTrackerConfiguration {
     /// # Example
     ///
     /// ```rust
-    /// prima_datadog::TrackerConfiguration::new().with_custom(|metric: &str, tags: &[String]| {
+    /// prima_datadog::TagTrackerConfiguration::new().with_custom(|metric: &str, tags: &[String]| {
     ///     println!("Exceeded custom metric threshold for metric {} with tags {:?}", metric, tags);
     /// });
     /// ```
