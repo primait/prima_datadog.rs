@@ -28,6 +28,11 @@ pub(crate) struct TrackerState {
 
 impl TrackerState {
     fn update(mut state: MutexGuard<'_, Self>, dd: &Datadog, metric: &str, tags: &[String]) {
+        debug_assert!(
+            !tags.is_empty(),
+            "update called with empty tags - should have been caught by Tracker::track"
+        );
+
         let seen_tag_sets = match state.seen.get_mut(metric) {
             Some(seen_tag_sets) => seen_tag_sets,
             None => {
@@ -115,6 +120,10 @@ impl Tracker {
     }
 
     pub(crate) fn track(&self, dd: &Datadog, metric: &str, tags: &[String]) {
+        if tags.is_empty() {
+            // If the tags are empty we don't need to track them
+            return;
+        }
         if let Some(state) = self.state() {
             TrackerState::update(state, dd, metric, tags)
         }
