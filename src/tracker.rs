@@ -1,6 +1,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    sync::Mutex,
+    iter::FromIterator,
+    sync::{Mutex, MutexGuard},
 };
 
 use crate::Datadog;
@@ -9,63 +10,23 @@ use crate::Datadog;
 /// 100 seems like a reasonable place to start warning for now
 pub const DEFAULT_TAG_THRESHOLD: usize = 100;
 
-pub(crate) struct Tracker {
-    // Threshold at which to take the user defined action, and stop tracking
+pub(crate) struct TrackerState {
+    /// Threshold at which to take the user defined action, and stop tracking
     count_threshold: usize,
-    // Actions to take when the threshold is exceeded
-    actions: Mutex<Vec<ThresholdAction>>,
-    // State
-    state: Mutex<TrackerState>,
-}
 
-enum TrackerState {
-    Tracking(TrackingState), // Currently tracking metric counts
-    Done,
-}
-
-#[derive(Debug)]
-struct TrackingState {
-    // For each metric, store the list of sets of unique tag key:value pairs seen. Yes, this hurts me too
+    /// For each metric, store the list of sets of unique tag key:value pairs seen. Yes, this hurts me too
     // TODO: this could be something neater like a prefix tree I think, but for now this will do
     seen: BTreeMap<String, BTreeSet<BTreeSet<String>>>,
+
+    /// Precomputed `seen.values().map(|tag_sets| tag_sets.len()).sum::<usize>()`
     custom_metric_count: usize,
+
+    /// Actions to take when the threshold is exceeded
+    actions: Vec<ThresholdAction>,
 }
 
-impl Tracker {
-    fn new(count_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
-        let state = if !actions.is_empty() {
-            TrackerState::Tracking(TrackingState {
-                seen: BTreeMap::new(),
-                custom_metric_count: 0,
-            })
-        } else {
-            TrackerState::Done // If we won't do anything when we overrun the threshold, don't bother tracking
-        };
-        Self {
-            count_threshold,
-            actions: Mutex::from(actions),
-            state: Mutex::new(state),
-        }
-    }
-
-    pub(crate) fn track(&self, dd: &Datadog, metric: &str, tags: &[String]) {
-        let mut state = self.state.lock().unwrap();
-        // I know this is spooky, but it lets me move out of the mutex guard, which I want to do
-        // so I have the option of moving the inner of TrackerState::Tracking into do_actions
-        let old_state = std::mem::replace(&mut *state, TrackerState::Done);
-        if let TrackerState::Tracking(mut inner) = old_state {
-            self.update(&mut inner, metric, tags);
-            if inner.custom_metric_count >= self.count_threshold {
-                // We REALLY don't want to hold the lock while we run the actions, since a user
-                // could e.g. call incr from within a custom action, and deadlock the whole app
-                drop(state);
-                return self.do_actions(dd, metric, tags, inner);
-            }
-            *state = TrackerState::Tracking(inner);
-        }
-    }
-
-    fn update(&self, state: &mut TrackingState, metric: &str, tags: &[String]) {
+impl TrackerState {
+    fn update(mut state: MutexGuard<'_, Self>, dd: &Datadog, metric: &str, tags: &[String]) {
         let seen_tag_sets = match state.seen.get_mut(metric) {
             Some(seen_tag_sets) => seen_tag_sets,
             None => {
@@ -82,17 +43,35 @@ impl Tracker {
             .all(|tag_set| tag_set.len() != tags.len() || tags.iter().any(|tag| !tag_set.contains(tag)));
 
         if set_is_novel {
-            seen_tag_sets.insert(tags.iter().cloned().collect::<BTreeSet<_>>());
+            seen_tag_sets.insert(BTreeSet::from_iter(tags.iter().cloned()));
             state.custom_metric_count += 1;
+
+            // Check if we've exceeded the threshold
+            if state.custom_metric_count >= state.count_threshold {
+                Self::do_actions(state, dd, metric, tags);
+            }
         }
     }
 
-    fn do_actions(&self, dd: &Datadog, metric: &str, tags: &[String], state: TrackingState) {
-        let mut actions = self.actions.lock().unwrap();
-        let old_actions = std::mem::take(&mut *actions);
-        for action in old_actions {
+    fn do_actions(mut lock: MutexGuard<'_, Self>, dd: &Datadog, metric: &str, tags: &[String]) {
+        let actions = core::mem::take(&mut lock.actions);
+        if actions.is_empty() {
+            debug_assert!(
+                false,
+                "do_actions called with no actions - should have been caught by Tracker::state or Tracker::new"
+            );
+            return;
+        }
+
+        let event_tags = lock.generate_event_tags();
+
+        // We REALLY don't want to hold the lock while we run the actions, since a user
+        // could e.g. call incr from within a custom action, and deadlock the whole app
+        drop(lock);
+
+        for action in actions {
             match action {
-                ThresholdAction::Event(title, text) => dd.do_event(title, text, self.generate_event_tags(&state)),
+                ThresholdAction::Event(title, text) => dd.do_event(title, text, event_tags.clone()),
                 ThresholdAction::Custom(mut action) => {
                     action(metric.to_string(), tags.to_owned());
                 }
@@ -100,12 +79,44 @@ impl Tracker {
         }
     }
 
-    fn generate_event_tags(&self, state: &TrackingState) -> Vec<String> {
-        state
-            .seen
+    fn generate_event_tags(&self) -> Vec<String> {
+        self.seen
             .iter()
             .map(|(metric, unique_tag_sets)| format!("{}:{}", metric, unique_tag_sets.len()))
             .collect()
+    }
+}
+
+pub(crate) struct Tracker(Option<Mutex<TrackerState>>);
+
+impl Tracker {
+    fn new(count_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
+        Tracker(if !actions.is_empty() {
+            Some(Mutex::new(TrackerState {
+                count_threshold,
+                actions,
+
+                seen: Default::default(),
+                custom_metric_count: 0,
+            }))
+        } else {
+            None
+        })
+    }
+
+    fn state(&self) -> Option<MutexGuard<'_, TrackerState>> {
+        let lock = self.0.as_ref()?.lock().unwrap();
+        if !lock.actions.is_empty() {
+            Some(lock)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn track(&self, dd: &Datadog, metric: &str, tags: &[String]) {
+        if let Some(state) = self.state() {
+            TrackerState::update(state, dd, metric, tags)
+        }
     }
 }
 
