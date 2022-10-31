@@ -15,8 +15,7 @@ pub(crate) struct TrackerState {
     /// Threshold at which to take the user defined action, and stop tracking
     count_threshold: usize,
 
-    /// For each metric, store the list of sets of unique tag key:value pairs seen. Yes, this hurts me too
-    // TODO: this could be something neater like a prefix tree I think, but for now this will do
+    /// For each metric, store the list of sets of unique tag key:value pairs seen
     seen: BTreeMap<String, BTreeSet<BTreeSet<String>>>,
 
     /// Precomputed `seen.values().map(|tag_sets| tag_sets.len()).sum::<usize>()`
@@ -144,12 +143,12 @@ enum ThresholdAction {
 
 pub type ThresholdCustomAction = Box<dyn for<'a> FnMut(&'a str, &'a [String]) + Send + Sync>;
 
-pub struct TrackerConfiguration {
+pub struct TagTrackerConfiguration {
     count_threshold: usize,
     actions: Vec<ThresholdAction>,
 }
 
-impl Default for TrackerConfiguration {
+impl Default for TagTrackerConfiguration {
     fn default() -> Self {
         Self {
             count_threshold: DEFAULT_TAG_THRESHOLD,
@@ -158,7 +157,7 @@ impl Default for TrackerConfiguration {
     }
 }
 
-impl TrackerConfiguration {
+impl TagTrackerConfiguration {
     pub fn new() -> Self {
         Self {
             count_threshold: DEFAULT_TAG_THRESHOLD,

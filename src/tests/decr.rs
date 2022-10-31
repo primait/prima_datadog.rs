@@ -1,28 +1,28 @@
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::Datadog;
-use crate::TrackerConfiguration;
+use crate::TagTrackerConfiguration;
 
 #[test]
 pub fn decr_with_literal() {
     let mock = mocks::decr_mock("test", &[]);
-    Datadog::new(mock, true, TrackerConfiguration::new()).do_decr("test", vec![]);
+    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_decr("test", vec![]);
 }
 
 #[test]
 pub fn decr_with_type() {
     let mock = mocks::decr_mock("test1_event", &[]);
-    Datadog::new(mock, true, TrackerConfiguration::new()).do_decr(TestEvent::Test1, vec![]);
+    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_decr(TestEvent::Test1, vec![]);
 }
 
 #[test]
 pub fn decr_with_literal_and_tags() {
     let mock = mocks::decr_mock("test", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, TrackerConfiguration::new()).do_decr("test", vec!["added:tag".to_string()]);
+    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_decr("test", vec!["added:tag".to_string()]);
 }
 
 #[test]
 pub fn decr_with_type_and_tags() {
     let mock = mocks::decr_mock("test1_event", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, TrackerConfiguration::new()).do_decr(TestEvent::Test1, vec!["added:tag".to_string()]);
+    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_decr(TestEvent::Test1, vec!["added:tag".to_string()]);
 }

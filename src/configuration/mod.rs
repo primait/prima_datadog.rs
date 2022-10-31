@@ -6,7 +6,7 @@ mod test;
 pub use prima::{Country, Environment, PrimaConfiguration};
 pub use test::TestConfiguration;
 
-use crate::TrackerConfiguration;
+use crate::TagTrackerConfiguration;
 
 /// A trait representing a valid configuration entity
 #[allow(clippy::wrong_self_convention)]
@@ -23,8 +23,8 @@ pub trait Configuration {
     /// Default tags to be sent with every metric reporting
     fn default_tags(&self) -> Vec<String>;
     /// Get the threshold at which to emit a warning event for high tag cardinality. Defaults to 100
-    fn take_tracker_config(&mut self) -> TrackerConfiguration {
-        TrackerConfiguration::new()
+    fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
+        TagTrackerConfiguration::new()
     }
 }
 

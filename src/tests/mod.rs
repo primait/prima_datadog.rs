@@ -12,7 +12,6 @@ mod incr;
 mod mocks;
 mod service_check;
 mod set;
-mod tag_check;
 mod time;
 mod timing;
 mod tracker;

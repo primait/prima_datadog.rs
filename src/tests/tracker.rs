@@ -1,13 +1,13 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
-use crate::{Datadog, TrackerConfiguration};
+use crate::{Datadog, TagTrackerConfiguration};
 
 use super::mocks::{expect_event, expect_incr, MockClient};
 
 #[test]
 pub fn no_actions_tracker_does_nothing() {
     let mut mock = MockClient::new();
-    let tracker_config = TrackerConfiguration::new().with_threshold(5);
+    let tracker_config = TagTrackerConfiguration::new().with_threshold(5);
     // Expect 100 increment calls
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
@@ -24,7 +24,7 @@ pub fn event_action_tracker_emits_event() {
     let title = "test";
     let message = "Exceeded tag cardinality limit";
     let mut mock = MockClient::new();
-    let tracker_config = TrackerConfiguration::new()
+    let tracker_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
         .with_event(String::from(title), String::from(message));
     let tags = vec![format!("test:{}", threshold)];
@@ -59,7 +59,7 @@ fn custom_action_is_run() {
         assert!(!called.load(std::sync::atomic::Ordering::SeqCst)); // Assert we're called at most once
         called.store(true, std::sync::atomic::Ordering::SeqCst);
     };
-    let tracker_config = TrackerConfiguration::new()
+    let tracker_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
         .with_custom(custom_action);
     // Expect 100 increment calls
@@ -72,4 +72,26 @@ fn custom_action_is_run() {
     }
     // Assert the closure is called at least once
     assert!(outer.load(std::sync::atomic::Ordering::SeqCst));
+}
+
+#[test]
+pub fn check_event_sent_exactly_once() {
+    let threshold = 7;
+    let title = "test";
+    let message = "Exceeded tag cardinality limit";
+    let tags: Vec<_> = vec![format!("test:{}", threshold)];
+    let mut mock = MockClient::new();
+    for i in 0..100 {
+        if i == threshold {
+            mock = expect_event(mock, title, message, tags.clone());
+        }
+        mock = expect_incr(mock, "test", vec![format!("{}", i)]);
+    }
+    let tracking_config = TagTrackerConfiguration::new()
+        .with_threshold(threshold)
+        .with_event(String::from(title), String::from(message));
+    let dd = Datadog::new(mock, true, tracking_config);
+    for i in 0..100 {
+        dd.do_incr("test", vec![format!("{}", i)]);
+    }
 }

@@ -104,9 +104,8 @@
 //! For example, avoid passing things like user IDs, session IDs, request IDs, or other values that
 //! vary significantly. See https://docs.datadoghq.com/getting_started/tagging/ for more information.
 //!
-//! By default, prima_datadog will emit an event if a large number of unique tag values are seen, with
-//! the event title "prima_datadog_rs_tag_limit_exceeded". The threshold for this event to be emitted
-//! default to 100. Different thresholds may be set using PrimaConfiguration::with_tag_warn_threshold.
+//! Users may configure some actions to be taken when a metric count threshold is exceeded. See
+//! [tracker::TagTrackerConfiguration] for more information.
 //!
 //! ## References
 //!
@@ -181,7 +180,7 @@ impl Datadog {
     fn new(
         client: impl 'static + DogstatsdClient + Send + Sync,
         is_reporting_enabled: bool,
-        tracker_config: TrackerConfiguration,
+        tracker_config: TagTrackerConfiguration,
     ) -> Self {
         Self {
             client: Box::new(client),
