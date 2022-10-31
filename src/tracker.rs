@@ -7,6 +7,7 @@ use std::{
 use crate::Datadog;
 
 /// See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
+///
 /// 100 seems like a reasonable place to start warning for now
 pub const DEFAULT_TAG_THRESHOLD: usize = 100;
 
@@ -71,7 +72,7 @@ impl TrackerState {
 
         for action in actions {
             match action {
-                ThresholdAction::Event(title, text) => dd.do_event(title, text, event_tags.clone()),
+                ThresholdAction::Event { title, text } => dd.do_event(title, text, event_tags.clone()),
                 ThresholdAction::Custom(mut action) => {
                     action(metric, tags);
                 }
@@ -120,14 +121,15 @@ impl Tracker {
     }
 }
 
-// Actions that define what the tracker will do when the custom metric threshold is passed.
+/// Actions that define what the tracker will do when the custom metric threshold is passed.
 // A user may define any number of these, and by default none are taken.
 enum ThresholdAction {
-    // Emit an event. The events title is the first string, and the text the second. The count of unique tag sets,
-    // per metric, is provided as the tags for the event, i.e. for a given metric "metric", there will be a tag "metric:count",
-    // where count is the number of unique tag sets seen for that metric.
-    Event(String, String),
-    // Take some custom action. The function will be passed the metric name and tags
+    /// Emit an event. The count of unique tag sets, per metric, is provided as the tags
+    /// for the event, i.e. for a given metric `metric`, there will be a tag `metric:count`,
+    /// where count is the number of unique tag sets seen for that metric.
+    Event { title: String, text: String },
+
+    /// Take some custom action. The function will be passed the metric name and tags
     Custom(ThresholdCustomAction),
 }
 
@@ -156,7 +158,7 @@ impl TrackerConfiguration {
     }
 
     pub fn with_event(mut self, title: String, text: String) -> Self {
-        self.actions.push(ThresholdAction::Event(title, text));
+        self.actions.push(ThresholdAction::Event { title, text });
         self
     }
 
