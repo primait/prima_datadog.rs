@@ -12,7 +12,7 @@ pub fn check_event_sent_exactly_once() {
     let mut mock = MockClient::new();
     for i in 0..100 {
         if i == threshold {
-            mock = expect_event(mock, title, &message, tags.clone());
+            mock = expect_event(mock, title, message, tags.clone());
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
