@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     sync::Mutex,
 };
 
@@ -27,7 +27,7 @@ enum TrackerState {
 struct TrackingState {
     // For each metric, store the list of sets of unique tag key:value pairs seen. Yes, this hurts me too
     // TODO: this could be something neater like a prefix tree I think, but for now this will do
-    seen: HashMap<String, Vec<HashSet<String>>>,
+    seen: BTreeMap<String, BTreeSet<BTreeSet<String>>>,
     custom_metric_count: usize,
 }
 
@@ -35,7 +35,7 @@ impl Tracker {
     fn new(count_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
         let state = if !actions.is_empty() {
             TrackerState::Tracking(TrackingState {
-                seen: HashMap::new(),
+                seen: BTreeMap::new(),
                 custom_metric_count: 0,
             })
         } else {
@@ -66,13 +66,23 @@ impl Tracker {
     }
 
     fn update(&self, state: &mut TrackingState, metric: &str, tags: &[String]) {
-        let seen_tag_sets = state.seen.entry(metric.to_string()).or_default();
-        // This cloning is a little sad but necessary for the eq check we do next to be efficient.
-        // We'd have to clone regardless if the tag set was novel, but that should be rare so it's still unfortunate.
-        let new_tag_set = tags.iter().cloned().collect::<HashSet<_>>();
-        let set_is_novel = seen_tag_sets.iter().all(|seen| !seen.eq(&new_tag_set));
+        let seen_tag_sets = match state.seen.get_mut(metric) {
+            Some(seen_tag_sets) => seen_tag_sets,
+            None => {
+                // This isn't very efficient, but because this code path is only taken once per metric, it's not a big deal.
+                // Doing this is far better than having to allocate the metric to a String for every call.
+                state.seen.insert(metric.to_string(), Default::default());
+                state.seen.get_mut(metric).unwrap()
+            }
+        };
+
+        // Is this set of tags new for this metric?
+        let set_is_novel = seen_tag_sets
+            .iter()
+            .all(|tag_set| tag_set.len() != tags.len() || tags.iter().any(|tag| !tag_set.contains(tag)));
+
         if set_is_novel {
-            seen_tag_sets.push(new_tag_set);
+            seen_tag_sets.insert(tags.iter().cloned().collect::<BTreeSet<_>>());
             state.custom_metric_count += 1;
         }
     }
