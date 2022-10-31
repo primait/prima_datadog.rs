@@ -13,13 +13,13 @@ pub const DEFAULT_TAG_THRESHOLD: usize = 100;
 
 pub(crate) struct TrackerState {
     /// Threshold at which to take the user defined action, and stop tracking
-    count_threshold: usize,
+    cardinality_threshold: usize,
 
-    /// For each metric, store the list of sets of unique tag key:value pairs seen
-    seen: BTreeMap<String, BTreeSet<BTreeSet<String>>>,
+    /// The number of unique sets of tags seen for each metric
+    cardinality_count: usize,
 
-    /// Precomputed `seen.values().map(|tag_sets| tag_sets.len()).sum::<usize>()`
-    custom_metric_count: usize,
+    /// For each metric, store cardinality
+    seen: BTreeMap<String, BTreeMap<String, BTreeSet<usize>>>,
 
     /// Actions to take when the threshold is exceeded
     actions: Vec<ThresholdAction>,
@@ -32,27 +32,46 @@ impl TrackerState {
             "update called with empty tags - should have been caught by Tracker::track"
         );
 
-        let seen_tag_sets = match state.seen.get_mut(metric) {
-            Some(seen_tag_sets) => seen_tag_sets,
-            None => {
-                // This isn't very efficient, but because this code path is only taken once per metric, it's not a big deal.
-                // Doing this is far better than having to allocate the metric to a String for every call.
-                state.seen.insert(metric.to_string(), Default::default());
-                state.seen.get_mut(metric).unwrap()
+        let mut cardinality_increased = false;
+
+        match state.seen.get_mut(metric) {
+            Some(seen_tags) => {
+                for tag in tags.iter() {
+                    match seen_tags.get_mut(tag) {
+                        Some(seen_tags_len) => {
+                            if seen_tags_len.insert(tags.len()) {
+                                // This tag has not been seen yet (with this number of tags in the set)
+                                cardinality_increased = true;
+                            }
+                        }
+
+                        None => {
+                            // This tag has not been seen yet (with any number of tags in the set)
+                            seen_tags.insert(tag.to_string(), BTreeSet::from_iter(std::iter::once(tags.len())));
+                            cardinality_increased = true;
+                        }
+                    }
+                }
             }
-        };
 
-        // Is this set of tags new for this metric?
-        let set_is_novel = seen_tag_sets
-            .iter()
-            .all(|tag_set| tag_set.len() != tags.len() || tags.iter().any(|tag| !tag_set.contains(tag)));
+            None => {
+                // This metric has not been seen yet
+                state.seen.insert(
+                    metric.to_string(),
+                    BTreeMap::from_iter(
+                        tags.iter()
+                            .map(|tag| (tag.to_string(), BTreeSet::from_iter(std::iter::once(tags.len())))),
+                    ),
+                );
+                cardinality_increased = true;
+            }
+        }
 
-        if set_is_novel {
-            seen_tag_sets.insert(BTreeSet::from_iter(tags.iter().cloned()));
-            state.custom_metric_count += 1;
+        if cardinality_increased {
+            state.cardinality_count += 1;
 
             // Check if we've exceeded the threshold
-            if state.custom_metric_count >= state.count_threshold {
+            if state.cardinality_count >= state.cardinality_threshold {
                 Self::do_actions(state, dd, metric, tags);
             }
         }
@@ -69,6 +88,9 @@ impl TrackerState {
         }
 
         let event_tags = lock.generate_event_tags();
+
+        // We can deallocate the memory for the seen tags now, since we're going to stop tracking
+        lock.seen = Default::default();
 
         // We REALLY don't want to hold the lock while we run the actions, since a user
         // could e.g. call incr from within a custom action, and deadlock the whole app
@@ -95,14 +117,14 @@ impl TrackerState {
 pub(crate) struct Tracker(Option<Mutex<TrackerState>>);
 
 impl Tracker {
-    fn new(count_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
+    fn new(cardinality_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
         Tracker(if !actions.is_empty() {
             Some(Mutex::new(TrackerState {
-                count_threshold,
+                cardinality_threshold,
                 actions,
 
                 seen: Default::default(),
-                custom_metric_count: 0,
+                cardinality_count: 0,
             }))
         } else {
             None
