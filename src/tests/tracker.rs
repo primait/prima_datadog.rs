@@ -31,7 +31,7 @@ pub fn event_action_tracker_emits_event() {
     // Expect 100 increment calls
     for i in 0..100 {
         if i == threshold {
-            mock = expect_event(mock, title, &message, tags.clone());
+            mock = expect_event(mock, title, message, tags.clone());
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
@@ -52,13 +52,13 @@ fn custom_action_is_run() {
     let expected_tags: Vec<_> = vec![format!("{}", threshold - 1)];
     let called = Arc::new(AtomicBool::new(false));
     let outer = called.clone();
-    let custom_action: Box<_> = Box::from(move |metric, tags: Vec<String>| {
+    let custom_action = move |metric: &str, tags: &[String]| {
         assert_eq!(metric, "test");
         assert!(tags.iter().all(|t| expected_tags.contains(t)));
         assert!(tags.len() == expected_tags.len());
         assert!(!called.load(std::sync::atomic::Ordering::SeqCst)); // Assert we're called at most once
         called.store(true, std::sync::atomic::Ordering::SeqCst);
-    });
+    };
     let tracker_config = TrackerConfiguration::new()
         .with_threshold(threshold)
         .with_custom(custom_action);

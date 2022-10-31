@@ -6,9 +6,7 @@ use prima_datadog::{
 
 fn incr_benchmark(c: &mut Criterion) {
     // The custom action will do nothing, but does force tracking to occur
-    let tracker_config = TrackerConfiguration::new()
-        .with_threshold(21)
-        .with_custom(Box::new(|_, _| {}));
+    let tracker_config = TrackerConfiguration::new().with_threshold(21).with_custom(|_, _| {});
     let configuration = PrimaConfiguration::new(
         "0.0.0.0:1234",
         "0.0.0.0:0",

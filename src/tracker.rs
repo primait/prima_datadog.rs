@@ -73,7 +73,7 @@ impl TrackerState {
             match action {
                 ThresholdAction::Event(title, text) => dd.do_event(title, text, event_tags.clone()),
                 ThresholdAction::Custom(mut action) => {
-                    action(metric.to_string(), tags.to_owned());
+                    action(metric, tags);
                 }
             }
         }
@@ -128,8 +128,10 @@ enum ThresholdAction {
     // where count is the number of unique tag sets seen for that metric.
     Event(String, String),
     // Take some custom action. The function will be passed the metric name and tags
-    Custom(Box<dyn FnMut(String, Vec<String>) + Send + Sync>),
+    Custom(ThresholdCustomAction),
 }
+
+pub type ThresholdCustomAction = Box<dyn for<'a> FnMut(&'a str, &'a [String]) + Send + Sync>;
 
 pub struct TrackerConfiguration {
     count_threshold: usize,
@@ -158,8 +160,18 @@ impl TrackerConfiguration {
         self
     }
 
-    pub fn with_custom(mut self, custom_action: Box<dyn FnMut(String, Vec<String>) + Send + Sync>) -> Self {
-        self.actions.push(ThresholdAction::Custom(custom_action));
+    /// Add a custom action to execute when the custom metric threshold is passed.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// prima_datadog::TrackerConfiguration::new().with_custom(|metric: &str, tags: &[String]| {
+    ///     println!("Exceeded custom metric threshold for metric {} with tags {:?}", metric, tags);
+    /// });
+    /// ```
+    pub fn with_custom(mut self, custom_action: impl FnMut(&str, &[String]) + Send + Sync + 'static) -> Self {
+        self.actions
+            .push(ThresholdAction::Custom(Box::new(custom_action) as Box<_>));
         self
     }
 
