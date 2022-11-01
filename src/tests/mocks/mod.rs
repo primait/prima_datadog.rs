@@ -2,8 +2,8 @@ use mockall::{mock, predicate::*};
 
 use crate::*;
 
-mod hack;
-use hack::*;
+mod dogstatsd_client;
+use dogstatsd_client::*;
 
 mock! {
     pub Client {}
