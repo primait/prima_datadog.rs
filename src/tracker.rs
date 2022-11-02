@@ -19,7 +19,7 @@ pub(crate) struct TrackerState {
     cardinality_count: usize,
 
     /// For each metric, store cardinality
-    seen: BTreeMap<String, BTreeMap<String, BTreeSet<usize>>>,
+    seen: BTreeMap<String, BTreeSet<BTreeSet<String>>>,
 
     /// Actions to take when the threshold is exceeded
     actions: Vec<ThresholdAction>,
@@ -32,42 +32,23 @@ impl TrackerState {
             "update called with empty tags - should have been caught by Tracker::track"
         );
 
-        let mut cardinality_increased = false;
-
-        match state.seen.get_mut(metric) {
-            Some(seen_tags) => {
-                for tag in tags.iter() {
-                    match seen_tags.get_mut(tag) {
-                        Some(seen_tags_len) => {
-                            if seen_tags_len.insert(tags.len()) {
-                                // This tag has not been seen yet (with this number of tags in the set)
-                                cardinality_increased = true;
-                            }
-                        }
-
-                        None => {
-                            // This tag has not been seen yet (with any number of tags in the set)
-                            seen_tags.insert(tag.to_string(), BTreeSet::from_iter(std::iter::once(tags.len())));
-                            cardinality_increased = true;
-                        }
-                    }
-                }
-            }
-
+        let seen_tag_sets = match state.seen.get_mut(metric) {
+            Some(seen_tag_sets) => seen_tag_sets,
             None => {
-                // This metric has not been seen yet
-                state.seen.insert(
-                    metric.to_string(),
-                    BTreeMap::from_iter(
-                        tags.iter()
-                            .map(|tag| (tag.to_string(), BTreeSet::from_iter(std::iter::once(tags.len())))),
-                    ),
-                );
-                cardinality_increased = true;
+                // This isn't very efficient, but because this code path is only taken once per metric, it's not a big deal.
+                // Doing this is far better than having to allocate the metric to a String for every call.
+                state.seen.insert(metric.to_string(), Default::default());
+                state.seen.get_mut(metric).unwrap()
             }
-        }
+        };
 
-        if cardinality_increased {
+        // Is this set of tags new for this metric?
+        let set_is_novel = seen_tag_sets
+            .iter()
+            .all(|tag_set| tag_set.len() != tags.len() || tags.iter().any(|tag| !tag_set.contains(tag)));
+
+        if set_is_novel {
+            seen_tag_sets.insert(BTreeSet::from_iter(tags.iter().cloned()));
             state.cardinality_count += 1;
 
             // Check if we've exceeded the threshold
