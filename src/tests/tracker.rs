@@ -110,7 +110,7 @@ pub fn check_algorithm_counts_unique_sets_directly() {
     let mock = expect_event(mock, "title", "text", vec![format!("test:{}", threshold)]);
     let tracking_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
-        .with_event("title".to_string(), "text".to_string()); // This event should never be emitted
+        .with_event("title".to_string(), "text".to_string()); // This event should be emitted
     let dd = Datadog::new(mock, true, tracking_config);
     dd.do_incr("test", set1);
     dd.do_incr("test", set2);
