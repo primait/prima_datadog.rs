@@ -133,7 +133,7 @@ impl Tracker {
 }
 
 /// Actions that define what the tracker will do when the custom metric threshold is passed.
-// A user may define any number of these, and by default none are taken.
+/// A user may define any number of these, and by default none are taken.
 enum ThresholdAction {
     /// Emit an event. The count of unique tag sets, per metric, is provided as the tags
     /// for the event, i.e. for a given metric `metric`, there will be a tag `metric:count`,
