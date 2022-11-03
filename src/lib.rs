@@ -104,7 +104,7 @@
 //! For example, avoid passing things like user IDs, session IDs, request IDs, or other values that
 //! vary significantly. See https://docs.datadoghq.com/getting_started/tagging/ for more information.
 //!
-//! Users may configure some actions to be taken when a metric count threshold is exceeded. See
+//! Users may configure some actions to be taken when a metric cardinality threshold is exceeded. See
 //! [tracker::TagTrackerConfiguration] for more information.
 //!
 //! ## References
