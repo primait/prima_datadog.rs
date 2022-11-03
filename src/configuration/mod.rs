@@ -22,7 +22,7 @@ pub trait Configuration {
     fn is_reporting_enabled(&self) -> bool;
     /// Default tags to be sent with every metric reporting
     fn default_tags(&self) -> Vec<String>;
-    /// Get the threshold at which to emit a warning event for high tag cardinality. Defaults to 100
+    /// Get the tag tracker configuration, and reset it to default. See [tracker::TagTrackerConfiguration]
     fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
         TagTrackerConfiguration::new()
     }

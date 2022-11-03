@@ -4,9 +4,11 @@ use prima_datadog::{
     Datadog, TagTrackerConfiguration,
 };
 
-fn incr_benchmark(c: &mut Criterion) {
+fn setup(_: &mut Criterion) {
     // The custom action will do nothing, but does force tracking to occur
-    let tracker_config = TagTrackerConfiguration::new().with_threshold(21).with_custom(|_, _| {});
+    let tracker_config = TagTrackerConfiguration::new()
+        .with_threshold(21)
+        .with_custom_action(|_, _| {});
     let configuration = PrimaConfiguration::new(
         "0.0.0.0:1234",
         "0.0.0.0:0",
@@ -15,9 +17,12 @@ fn incr_benchmark(c: &mut Criterion) {
     )
     .with_country(Country::It)
     .with_tracker_configuration(tracker_config);
+    Datadog::init(configuration).unwrap();
+}
+
+fn incr_benchmark(c: &mut Criterion) {
     // 20 test tags to simulate a normal to heavily tagged metric
     let tags = (0..20).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
-    Datadog::init(configuration).unwrap();
     c.bench_function("incr_benchmark", |b| {
         b.iter(|| {
             // Note: clone here is ok since we only care about /relative/ perf here
@@ -35,5 +40,5 @@ fn incr_with_too_many_tags(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, incr_benchmark, incr_with_too_many_tags);
+criterion_group!(benches, setup, incr_benchmark, incr_with_too_many_tags);
 criterion_main!(benches);

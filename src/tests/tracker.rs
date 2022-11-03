@@ -61,7 +61,7 @@ fn custom_action_is_run() {
     };
     let tracker_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
-        .with_custom(custom_action);
+        .with_custom_action(custom_action);
     // Expect 100 increment calls
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
