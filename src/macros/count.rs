@@ -3,15 +3,21 @@
 #[macro_export]
 macro_rules! count {
     ($stat:expr, $count:expr) => {
-        $crate::Datadog::count($stat, $count, vec![]);
+        $crate::Datadog::count($stat, $count, $crate::EMPTY_TAGS);
     };
     ($stat:path, $count:expr) => {
-        $crate::Datadog::count($stat.as_ref(), $count, vec![]);
+        $crate::Datadog::count($stat.as_ref(), $count, $crate::EMPTY_TAGS);
+    };
+    ($stat:expr, $count:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::count($stat, $count, &[$(::core::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path, $count:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::count($stat.as_ref(), $count, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr, $count:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::count($stat, $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::count($stat, $count, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $count:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::count($stat.as_ref(), $count, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::count($stat.as_ref(), $count, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

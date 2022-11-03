@@ -3,15 +3,21 @@
 #[macro_export]
 macro_rules! incr {
     ($stat:expr) => {
-        $crate::Datadog::incr($stat, vec![]);
+        $crate::Datadog::incr($stat, $crate::EMPTY_TAGS);
     };
     ($stat:path) => {
-        $crate::Datadog::incr($stat.as_ref(), vec![]);
+        $crate::Datadog::incr($stat.as_ref(), $crate::EMPTY_TAGS);
+    };
+    ($stat:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::incr($stat, &[$(::core::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::incr($stat.as_ref(), &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::incr($stat, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::incr($stat.as_ref(), std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::incr($stat.as_ref(), &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }

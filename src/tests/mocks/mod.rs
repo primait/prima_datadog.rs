@@ -2,9 +2,12 @@ use mockall::{mock, predicate::*};
 
 use crate::*;
 
+mod dogstatsd_client;
+use dogstatsd_client::*;
+
 mock! {
     pub Client {}
-    impl DogstatsdClient for Client {
+    impl MockDogstatsdClient for Client {
         /// Increment a StatsD counter
         fn incr(&self, metric: &str, tags: Vec<String>);
 
@@ -15,7 +18,7 @@ mock! {
         fn count(&self, metric: &str, count: i64, tags: Vec<String>);
 
         /// Time how long it takes for a block of code to execute
-        fn time(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce()>);
+        fn time<'a>(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce() + 'a>);
 
         /// Send your own timing metric in milliseconds
         fn timing(&self, metric: &str, ms: i64, tags: Vec<String>);
