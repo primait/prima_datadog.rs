@@ -29,7 +29,7 @@ pub(crate) struct Tracker {
 
 impl Tracker {
     fn new(cardinality_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
-        let state = if actions.is_empty() {
+        let state = if actions.is_empty() || cardinality_threshold == 0 {
             TrackerState::Done
         } else {
             TrackerState::Running {
