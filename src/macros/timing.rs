@@ -3,15 +3,21 @@
 #[macro_export]
 macro_rules! timing {
     ($stat:expr, $ms:expr) => {
-        $crate::Datadog::timing($stat, $ms, vec![]);
+        $crate::Datadog::timing($stat, $ms, $crate::EMPTY_TAGS);
     };
     ($stat:path, $ms:expr) => {
-        $crate::Datadog::timing($stat.as_ref(), $ms, vec![]);
+        $crate::Datadog::timing($stat.as_ref(), $ms, $crate::EMPTY_TAGS);
     };
     ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::timing($stat, $ms, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::timing($stat, $ms, &[$(::core::concat!($key, ":", $value)), *]);
+    };
+    ($stat:path, $ms:expr; $( $key:literal => $value:literal ), *) => {
+        $crate::Datadog::timing($stat.as_ref(), $ms, &[$(::core::concat!($key, ":", $value)), *]);
+    };
+    ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
+        $crate::Datadog::timing($stat, $ms, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
     ($stat:path, $ms:expr; $( $key:expr => $value:expr ), *) => {
-        $crate::Datadog::timing($stat.as_ref(), $ms, std::vec![$(std::format!("{}:{}", $key, $value)), *]);
+        $crate::Datadog::timing($stat.as_ref(), $ms, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
     };
 }
