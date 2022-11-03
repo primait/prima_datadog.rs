@@ -1,24 +1,33 @@
 use crate::tests::mocks;
 use crate::tests::TestEvent;
-use crate::Datadog;
-use crate::TagTrackerConfiguration;
+use crate::DatadogWrapper;
+use crate::TagTrackerConfigurationWrapper;
+use crate::EMPTY_TAGS;
 
 #[test]
 pub fn distribution_with_literal() {
     let mock = mocks::distribution_mock("test", "test_value", &[]);
-    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_distribution("test", "test_value", vec![]);
+    DatadogWrapper::new(mock, true, TagTrackerConfigurationWrapper::new()).do_distribution(
+        "test",
+        "test_value",
+        EMPTY_TAGS,
+    );
 }
 
 #[test]
 pub fn distribution_with_type() {
     let mock = mocks::distribution_mock("test1_event", "test_value", &[]);
-    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_distribution(TestEvent::Test1, "test_value", vec![]);
+    DatadogWrapper::new(mock, true, TagTrackerConfigurationWrapper::new()).do_distribution(
+        TestEvent::Test1,
+        "test_value",
+        EMPTY_TAGS,
+    );
 }
 
 #[test]
 pub fn distribution_with_literal_and_tags() {
     let mock = mocks::distribution_mock("test", "test_value", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_distribution(
+    DatadogWrapper::new(mock, true, TagTrackerConfigurationWrapper::new()).do_distribution(
         "test",
         "test_value",
         vec!["added:tag".to_string()],
@@ -28,7 +37,7 @@ pub fn distribution_with_literal_and_tags() {
 #[test]
 pub fn distribution_with_type_and_tags() {
     let mock = mocks::distribution_mock("test1_event", "test_value", &["added:tag", "env:test"]);
-    Datadog::new(mock, true, TagTrackerConfiguration::new()).do_distribution(
+    DatadogWrapper::new(mock, true, TagTrackerConfigurationWrapper::new()).do_distribution(
         TestEvent::Test1,
         "test_value",
         vec!["added:tag".to_string()],

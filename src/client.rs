@@ -5,93 +5,93 @@ use crate::{ServiceCheckOptions, ServiceStatus, TagsProvider};
 /// and being able to mock it for testing purposes
 pub trait DogstatsdClient {
     /// Increment a StatsD counter
-    fn incr(&self, metric: &str, tags: impl TagsProvider);
+    fn incr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>);
 
     /// Decrement a StatsD counter
-    fn decr(&self, metric: &str, tags: impl TagsProvider);
+    fn decr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>);
 
     /// Make an arbitrary change to a StatsD counter
-    fn count(&self, metric: &str, count: i64, tags: impl TagsProvider);
+    fn count<S: AsRef<str>>(&self, metric: &str, count: i64, tags: impl TagsProvider<S>);
 
     /// Time how long it takes for a block of code to execute
-    fn time(&self, metric: &str, tags: impl TagsProvider, block: impl FnOnce());
+    fn time<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce());
 
     /// Send your own timing metric in milliseconds
-    fn timing(&self, metric: &str, ms: i64, tags: impl TagsProvider);
+    fn timing<S: AsRef<str>>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>);
 
     /// Report an arbitrary value as a gauge
-    fn gauge(&self, metric: &str, val: &str, tags: impl TagsProvider);
+    fn gauge<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>);
 
     /// Report a value in a histogram
-    fn histogram(&self, metric: &str, val: &str, tags: impl TagsProvider);
+    fn histogram<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>);
 
     /// Report a value in a distribution
-    fn distribution(&self, metric: &str, val: &str, tags: impl TagsProvider);
+    fn distribution<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>);
 
     /// Report a value in a set
-    fn set(&self, metric: &str, val: &str, tags: impl TagsProvider);
+    fn set<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>);
 
     /// Report the status of a service
-    fn service_check(
+    fn service_check<S: AsRef<str>>(
         &self,
         metric: &str,
         val: ServiceStatus,
-        tags: impl TagsProvider,
+        tags: impl TagsProvider<S>,
         options: Option<ServiceCheckOptions>,
     );
 
     /// Send a custom event as a title and a body
-    fn event(&self, title: &str, text: &str, tags: impl TagsProvider);
+    fn event<S: AsRef<str>>(&self, title: &str, text: &str, tags: impl TagsProvider<S>);
 }
 
 impl DogstatsdClient for dogstatsd::Client {
-    fn incr(&self, metric: &str, tags: impl TagsProvider) {
-        let _ = self.incr(metric, tags);
+    fn incr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>) {
+        let _ = self.incr(metric, tags.as_ref());
     }
 
-    fn decr(&self, metric: &str, tags: impl TagsProvider) {
-        let _ = self.decr(metric, tags);
+    fn decr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>) {
+        let _ = self.decr(metric, tags.as_ref());
     }
 
-    fn count(&self, metric: &str, count: i64, tags: impl TagsProvider) {
-        let _ = self.count(metric, count, tags);
+    fn count<S: AsRef<str>>(&self, metric: &str, count: i64, tags: impl TagsProvider<S>) {
+        let _ = self.count(metric, count, tags.as_ref());
     }
 
-    fn time(&self, metric: &str, tags: impl TagsProvider, block: impl FnOnce()) {
-        let _ = self.time(metric, tags, block);
+    fn time<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce()) {
+        let _ = self.time(metric, tags.as_ref(), block);
     }
 
-    fn timing(&self, metric: &str, ms: i64, tags: impl TagsProvider) {
-        let _ = self.timing(metric, ms, tags);
+    fn timing<S: AsRef<str>>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>) {
+        let _ = self.timing(metric, ms, tags.as_ref());
     }
 
-    fn gauge(&self, metric: &str, val: &str, tags: impl TagsProvider) {
-        let _ = self.gauge(metric, val, tags);
+    fn gauge<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
+        let _ = self.gauge(metric, val, tags.as_ref());
     }
 
-    fn histogram(&self, metric: &str, val: &str, tags: impl TagsProvider) {
-        let _ = self.histogram(metric, val, tags);
+    fn histogram<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
+        let _ = self.histogram(metric, val, tags.as_ref());
     }
 
-    fn distribution(&self, metric: &str, val: &str, tags: impl TagsProvider) {
-        let _ = self.distribution(metric, val, tags);
+    fn distribution<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
+        let _ = self.distribution(metric, val, tags.as_ref());
     }
 
-    fn set(&self, metric: &str, val: &str, tags: impl TagsProvider) {
-        let _ = self.set(metric, val, tags);
+    fn set<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
+        let _ = self.set(metric, val, tags.as_ref());
     }
 
-    fn service_check(
+    fn service_check<S: AsRef<str>>(
         &self,
         metric: &str,
         val: ServiceStatus,
-        tags: impl TagsProvider,
+        tags: impl TagsProvider<S>,
         options: Option<ServiceCheckOptions>,
     ) {
-        let _ = self.service_check(metric, val, tags, options);
+        let _ = self.service_check(metric, val, tags.as_ref(), options);
     }
 
-    fn event(&self, title: &str, text: &str, tags: impl TagsProvider) {
-        let _ = self.event(title, text, tags);
+    fn event<S: AsRef<str>>(&self, title: &str, text: &str, tags: impl TagsProvider<S>) {
+        let _ = self.event(title, text, tags.as_ref());
     }
 }

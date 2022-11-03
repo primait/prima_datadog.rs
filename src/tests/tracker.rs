@@ -1,18 +1,18 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
-use crate::{Datadog, TagTrackerConfiguration};
+use crate::{DatadogWrapper, TagTrackerConfigurationWrapper};
 
 use super::mocks::{expect_event, expect_incr, MockClient};
 
 #[test]
 pub fn no_actions_tracker_does_nothing() {
     let mut mock = MockClient::new();
-    let tracker_config = TagTrackerConfiguration::new().with_threshold(5);
+    let tracker_config = TagTrackerConfigurationWrapper::new().with_threshold(5);
     // Expect 100 increment calls
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = Datadog::new(mock, true, tracker_config);
+    let dd = DatadogWrapper::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -24,7 +24,7 @@ pub fn event_action_tracker_emits_event() {
     let title = "test";
     let message = "Exceeded tag cardinality limit";
     let mut mock = MockClient::new();
-    let tracker_config = TagTrackerConfiguration::new()
+    let tracker_config = TagTrackerConfigurationWrapper::new()
         .with_threshold(threshold)
         .with_event(String::from(title), String::from(message));
     let tags = vec![format!("test:{}", threshold)];
@@ -35,7 +35,7 @@ pub fn event_action_tracker_emits_event() {
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = Datadog::new(mock, true, tracker_config);
+    let dd = DatadogWrapper::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -52,21 +52,21 @@ fn custom_action_is_run() {
     let expected_tags: Vec<_> = vec![format!("{}", threshold - 1)];
     let called = Arc::new(AtomicBool::new(false));
     let outer = called.clone();
-    let custom_action = move |metric: &str, tags: &[String]| {
+    let custom_action = move |metric: &str, tags: &[&str]| {
         assert_eq!(metric, "test");
-        assert!(tags.iter().all(|t| expected_tags.contains(t)));
+        assert!(tags.iter().all(|t| expected_tags.iter().any(|e| e == t)));
         assert!(tags.len() == expected_tags.len());
         assert!(!called.load(std::sync::atomic::Ordering::SeqCst)); // Assert we're called at most once
         called.store(true, std::sync::atomic::Ordering::SeqCst);
     };
-    let tracker_config = TagTrackerConfiguration::new()
+    let tracker_config = TagTrackerConfigurationWrapper::new()
         .with_threshold(threshold)
         .with_custom_action(custom_action);
     // Expect 100 increment calls
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = Datadog::new(mock, true, tracker_config);
+    let dd = DatadogWrapper::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -87,10 +87,10 @@ pub fn check_event_sent_exactly_once() {
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let tracking_config = TagTrackerConfiguration::new()
+    let tracking_config = TagTrackerConfigurationWrapper::new()
         .with_threshold(threshold)
         .with_event(String::from(title), String::from(message));
-    let dd = Datadog::new(mock, true, tracking_config);
+    let dd = DatadogWrapper::new(mock, true, tracking_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -108,10 +108,10 @@ pub fn check_algorithm_counts_unique_sets_directly() {
     let mock = expect_incr(mock, "test", set2.clone());
     let mock = expect_incr(mock, "test", set3.clone());
     let mock = expect_event(mock, "title", "text", vec![format!("test:{}", threshold)]);
-    let tracking_config = TagTrackerConfiguration::new()
+    let tracking_config = TagTrackerConfigurationWrapper::new()
         .with_threshold(threshold)
         .with_event("title".to_string(), "text".to_string()); // This event should be emitted
-    let dd = Datadog::new(mock, true, tracking_config);
+    let dd = DatadogWrapper::new(mock, true, tracking_config);
     dd.do_incr("test", set1);
     dd.do_incr("test", set2);
     dd.do_incr("test", set3);
