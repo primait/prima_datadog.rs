@@ -1,6 +1,6 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
-use crate::{DatadogWrapper, TagTrackerConfiguration};
+use crate::{Datadog, TagTrackerConfiguration};
 
 use super::mocks::{expect_event, expect_incr, MockClient};
 
@@ -12,7 +12,7 @@ pub fn no_actions_tracker_does_nothing() {
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = DatadogWrapper::new(mock, true, tracker_config);
+    let dd = Datadog::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -35,7 +35,7 @@ pub fn event_action_tracker_emits_event() {
         }
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = DatadogWrapper::new(mock, true, tracker_config);
+    let dd = Datadog::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -66,7 +66,7 @@ fn custom_action_is_run() {
     for i in 0..100 {
         mock = expect_incr(mock, "test", vec![format!("{}", i)]);
     }
-    let dd = DatadogWrapper::new(mock, true, tracker_config);
+    let dd = Datadog::new(mock, true, tracker_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -90,7 +90,7 @@ pub fn check_event_sent_exactly_once() {
     let tracking_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
         .with_event(String::from(title), String::from(message));
-    let dd = DatadogWrapper::new(mock, true, tracking_config);
+    let dd = Datadog::new(mock, true, tracking_config);
     for i in 0..100 {
         dd.do_incr("test", vec![format!("{}", i)]);
     }
@@ -111,7 +111,7 @@ pub fn check_algorithm_counts_unique_sets_directly() {
     let tracking_config = TagTrackerConfiguration::new()
         .with_threshold(threshold)
         .with_event("title".to_string(), "text".to_string()); // This event should be emitted
-    let dd = DatadogWrapper::new(mock, true, tracking_config);
+    let dd = Datadog::new(mock, true, tracking_config);
     dd.do_incr("test", set1);
     dd.do_incr("test", set2);
     dd.do_incr("test", set3);
