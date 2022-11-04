@@ -1,11 +1,10 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     iter::FromIterator,
-    marker::PhantomData,
     sync::Mutex,
 };
 
-use crate::{DatadogWrapper, DogstatsdClient, TagsProvider};
+use crate::{DogstatsdClient, TagsProvider};
 
 /// See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
 ///
@@ -21,16 +20,14 @@ enum TrackerState {
     Done,
 }
 
-pub(crate) struct Tracker<C: DogstatsdClient> {
+pub(crate) struct Tracker {
     /// Threshold at which to take the user defined action, and stop tracking
     cardinality_threshold: usize,
     /// Our internal state
     state: Mutex<TrackerState>,
-    // Store the Datadog client implementation in the type system
-    _phantom: PhantomData<C>,
 }
 
-impl<C: DogstatsdClient> Tracker<C> {
+impl Tracker {
     fn new(cardinality_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
         let state = if actions.is_empty() || cardinality_threshold == 0 {
             TrackerState::Done
@@ -44,14 +41,13 @@ impl<C: DogstatsdClient> Tracker<C> {
         Tracker {
             cardinality_threshold,
             state: Mutex::new(state),
-            _phantom: PhantomData,
         }
     }
 
     /// Track the given tags, and take the user defined action if the cardinality threshold is reached.
     ///
     /// Returns the tags as-is, so that it can be used in a `DogstatsdClient` call.
-    pub(crate) fn wrap_and_track<S, T>(&self, dd: &DatadogWrapper<C>, metric: &str, tags: T) -> T
+    pub(crate) fn wrap_and_track<S, T>(&self, dd: &impl DogstatsdClient, metric: &str, tags: T) -> T
     where
         S: AsRef<str>,
         T: TagsProvider<S>,
@@ -82,7 +78,7 @@ impl<C: DogstatsdClient> Tracker<C> {
         tags
     }
 
-    fn track(&self, dd: &DatadogWrapper<C>, metric: &str, mut tags: RewindableTagsIter) {
+    fn track(&self, dd: &impl DogstatsdClient, metric: &str, mut tags: RewindableTagsIter) {
         let mut lock = self.state.lock().unwrap();
         let state = std::mem::replace(&mut *lock, TrackerState::Done);
         match state {
@@ -132,7 +128,7 @@ impl<C: DogstatsdClient> Tracker<C> {
     }
 
     fn do_actions(
-        dd: &DatadogWrapper<C>,
+        dd: &impl DogstatsdClient,
         seen: BTreeMap<String, Vec<BTreeSet<String>>>,
         actions: Vec<ThresholdAction>,
         metric: &str,
@@ -147,7 +143,7 @@ impl<C: DogstatsdClient> Tracker<C> {
 
         for action in actions {
             match action {
-                ThresholdAction::Event { title, text } => dd.do_event(title, text, &event_tags),
+                ThresholdAction::Event { title, text } => dd.event(&title, &text, &event_tags),
                 ThresholdAction::Custom(mut action) => {
                     action(metric, &tags);
                 }
@@ -188,30 +184,25 @@ type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str]) + Send + Sync>;
 /// ).with_country(Country::It).with_tracker_configuration(tracker_config);
 /// Datadog::init(configuration).unwrap();
 /// ```
-pub type TagTrackerConfiguration = TagTrackerConfigurationWrapper<dogstatsd::Client>;
-
-pub struct TagTrackerConfigurationWrapper<C> {
+pub struct TagTrackerConfiguration {
     count_threshold: usize,
     actions: Vec<ThresholdAction>,
-    _phantom: PhantomData<C>,
 }
 
-impl<C: DogstatsdClient> Default for TagTrackerConfigurationWrapper<C> {
+impl Default for TagTrackerConfiguration {
     fn default() -> Self {
         Self {
             count_threshold: DEFAULT_TAG_THRESHOLD,
             actions: Vec::new(),
-            _phantom: PhantomData,
         }
     }
 }
 
-impl<C: DogstatsdClient> TagTrackerConfigurationWrapper<C> {
+impl TagTrackerConfiguration {
     pub fn new() -> Self {
         Self {
             count_threshold: DEFAULT_TAG_THRESHOLD,
             actions: Vec::new(),
-            _phantom: PhantomData,
         }
     }
 
@@ -263,7 +254,7 @@ impl<C: DogstatsdClient> TagTrackerConfigurationWrapper<C> {
         self
     }
 
-    pub(crate) fn build(self) -> Tracker<C> {
+    pub(crate) fn build(self) -> Tracker {
         Tracker::new(self.count_threshold, self.actions)
     }
 }

@@ -171,7 +171,7 @@ pub struct DatadogWrapper<C: DogstatsdClient = dogstatsd::Client> {
     /// tells if metric should be reported. If false, nothing is sent to the udp socket.
     is_reporting_enabled: bool,
     // Tracking for high tag cardinality
-    tag_tracker: Tracker<C>,
+    tag_tracker: Tracker,
 }
 
 impl DatadogWrapper {
@@ -208,7 +208,7 @@ impl DatadogWrapper {
 }
 
 impl<C: DogstatsdClient> DatadogWrapper<C> {
-    fn new(client: C, is_reporting_enabled: bool, tracker_config: TagTrackerConfigurationWrapper<C>) -> Self {
+    fn new(client: C, is_reporting_enabled: bool, tracker_config: TagTrackerConfiguration) -> Self {
         Self {
             client,
             is_reporting_enabled,
@@ -227,7 +227,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
         if self.is_reporting_enabled {
             self.client.incr(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -243,7 +243,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
         if self.is_reporting_enabled {
             self.client.decr(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -260,7 +260,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.count(
                 metric.as_ref(),
                 count,
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -281,7 +281,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
         if self.is_reporting_enabled {
             self.client.time(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
                 block,
             );
         }
@@ -299,7 +299,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.timing(
                 metric.as_ref(),
                 ms,
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -321,7 +321,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.gauge(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -343,7 +343,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.histogram(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -365,7 +365,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.distribution(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -387,7 +387,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.set(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
@@ -415,7 +415,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.service_check(
                 metric.as_ref(),
                 value,
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
                 options,
             );
         }
@@ -438,7 +438,7 @@ impl<C: DogstatsdClient> DatadogWrapper<C> {
             self.client.event(
                 metric.as_ref(),
                 text.as_ref(),
-                self.tag_tracker.wrap_and_track(self, metric.as_ref(), tags),
+                self.tag_tracker.wrap_and_track(&self.client, metric.as_ref(), tags),
             );
         }
     }
