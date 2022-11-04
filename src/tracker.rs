@@ -23,24 +23,26 @@ enum TrackerState {
 pub(crate) struct Tracker {
     /// Threshold at which to take the user defined action, and stop tracking
     cardinality_threshold: usize,
+
     /// Our internal state
-    state: Mutex<TrackerState>,
+    ///
+    /// This will be `None` if the user does not want to track cardinality.
+    state: Option<Mutex<TrackerState>>,
 }
 
 impl Tracker {
     fn new(cardinality_threshold: usize, actions: Vec<ThresholdAction>) -> Self {
-        let state = if actions.is_empty() || cardinality_threshold == 0 {
-            TrackerState::Done
-        } else {
-            TrackerState::Running {
-                actions,
-                seen: Default::default(),
-                cardinality_count: 0,
-            }
-        };
         Tracker {
             cardinality_threshold,
-            state: Mutex::new(state),
+            state: if !actions.is_empty() && cardinality_threshold != 0 {
+                Some(Mutex::new(TrackerState::Running {
+                    actions,
+                    seen: Default::default(),
+                    cardinality_count: 0,
+                }))
+            } else {
+                None
+            },
         }
     }
 
@@ -57,7 +59,7 @@ impl Tracker {
         // 1. It takes a `impl TagsProvider<impl AsRef<str>>` and turns it into a `impl Iterator<Item = &str>`
         // 2. This iterator is then turned into a `RewindableTagsIter` which is a wrapper around the iterator
         //    that allows us to rewind it to the beginning at our pleasure.
-        // We use `dyn` to erase the type of the iterator, reducing binary size as it's better monomorphized.
+        // 3. We use `dyn` to erase the type of the iterator, reducing binary size as it's better monomorphized.
 
         {
             // Get a slice of `&[impl AsRef<str>]`
@@ -79,7 +81,10 @@ impl Tracker {
     }
 
     fn track(&self, dd: &impl DogstatsdClient, metric: &str, mut tags: RewindableTagsIter) {
-        let mut lock = self.state.lock().unwrap();
+        let mut lock = match self.state.as_ref() {
+            Some(state) => state.lock().unwrap(),
+            None => return,
+        };
         let state = std::mem::replace(&mut *lock, TrackerState::Done);
         match state {
             TrackerState::Running {
