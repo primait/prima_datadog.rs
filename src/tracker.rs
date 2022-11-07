@@ -123,6 +123,7 @@ impl Tracker {
                 return true;
             }
         };
+        // Is this set of tags new for this metric?
         let set_is_novel = seen_tag_set
             .iter()
             .all(|tag_set| tag_set.len() != tags.len() || tags.rewind().any(|tag| !tag_set.contains(tag)));
