@@ -46,45 +46,16 @@ impl Tracker {
         }
     }
 
-    /// Track the given tags, and take the user defined action if the cardinality threshold is reached.
-    ///
-    /// Returns the tags as-is, so that it can be used in a `DogstatsdClient` call.
-    pub(crate) fn wrap_and_track<S, T>(&self, dd: &impl DogstatsdClient, metric: &str, tags: T) -> T
+    pub(crate) fn track<S, T>(&self, dd: &impl DogstatsdClient, metric: &str, tags: T) -> T
     where
         S: AsRef<str>,
         T: TagsProvider<S>,
     {
-        // This function performs some magic that reduces binary size and number of allocations.
-        // It's not obvious, so here is a description of what it does:
-        // 1. It takes a `impl TagsProvider<impl AsRef<str>>` and turns it into a `impl Iterator<Item = &str>`
-        // 2. This iterator is then turned into a `RewindableTagsIter` which is a wrapper around the iterator
-        //    that allows us to rewind it to the beginning at our pleasure.
-        // 3. We use `dyn` to erase the type of the iterator, reducing binary size as it's better monomorphized.
-
-        {
-            // Get a slice of `&[impl AsRef<str>]`
-            let tags = tags.as_ref();
-            // Remember its length
-            let len = tags.len();
-            // Create an iterator that will infinitely cycle through the tags, returning `&str`s
-            let mut tags = tags.iter().map(|s| s.as_ref()).cycle();
-            // Create a stack allocated dyn iterator to put in the `RewindableTagsIter`
-            let tags: &mut dyn Iterator<Item = &str> = &mut tags;
-            // Construct a `RewindableTagsIter` that will allow us to rewind the iterator when needed
-            let tags = RewindableTagsIter { cursor: 0, tags, len };
-            // Now we can call `track`!
-            self.track(dd, metric, tags);
-        }
-
-        // Return the tags as-is for convenience
-        tags
-    }
-
-    fn track(&self, dd: &impl DogstatsdClient, metric: &str, mut tags: RewindableTagsIter) {
         let mut lock = match self.state.as_ref() {
             Some(state) => state.lock().unwrap(),
-            None => return,
+            None => return tags,
         };
+        let tag_slice = tags.as_ref();
         let state = std::mem::replace(&mut *lock, TrackerState::Done);
         match state {
             TrackerState::Running {
@@ -92,13 +63,13 @@ impl Tracker {
                 mut cardinality_count,
                 actions,
             } => {
-                let cardinality_grown = Self::update(&mut seen, metric, tags.rewind());
+                let cardinality_grown = Self::update(&mut seen, metric, tag_slice);
                 if cardinality_grown {
                     cardinality_count += 1;
                     if cardinality_count >= self.cardinality_threshold {
                         drop(lock);
-                        Self::do_actions(dd, seen, actions, metric, tags.rewind());
-                        return;
+                        Self::do_actions(dd, seen, actions, metric, tag_slice);
+                        return tags;
                     }
                 }
                 // Rebuild the running state if we didn't run the actions
@@ -110,15 +81,16 @@ impl Tracker {
             }
             TrackerState::Done => {}
         };
+        tags
     }
 
-    fn update(seen: &mut BTreeMap<String, Vec<BTreeSet<String>>>, metric: &str, tags: &mut RewindableTagsIter) -> bool {
+    fn update(seen: &mut BTreeMap<String, Vec<BTreeSet<String>>>, metric: &str, tags: &[impl AsRef<str>]) -> bool {
         let seen_tag_set = match seen.get_mut(metric) {
             Some(seen_tag_set) => seen_tag_set,
             None => {
                 seen.insert(
                     metric.to_string(),
-                    vec![BTreeSet::from_iter(tags.rewind().map(|tag| tag.to_string()))],
+                    vec![BTreeSet::from_iter(tags.iter().map(|tag| tag.as_ref().to_string()))],
                 );
                 return true;
             }
@@ -126,9 +98,9 @@ impl Tracker {
         // Is this set of tags new for this metric?
         let set_is_novel = seen_tag_set
             .iter()
-            .all(|tag_set| tag_set.len() != tags.len() || tags.rewind().any(|tag| !tag_set.contains(tag)));
+            .all(|tag_set| tag_set.len() != tags.len() || tags.iter().any(|tag| !tag_set.contains(tag.as_ref())));
         if set_is_novel {
-            seen_tag_set.push(BTreeSet::from_iter(tags.map(|tag| tag.to_string())));
+            seen_tag_set.push(BTreeSet::from_iter(tags.iter().map(|tag| tag.as_ref().to_string())));
         };
         set_is_novel
     }
@@ -138,20 +110,20 @@ impl Tracker {
         seen: BTreeMap<String, Vec<BTreeSet<String>>>,
         actions: Vec<ThresholdAction>,
         metric: &str,
-        tags: &mut RewindableTagsIter,
+        tags: &[impl AsRef<str>],
     ) {
         let event_tags = seen
             .iter()
             .map(|(metric, tags)| format!("{}:{}", metric, tags.len()))
             .collect::<Vec<_>>();
 
-        let tags = tags.rewind().collect::<Vec<&str>>();
+        let tags = tags.iter().map(|t| t.as_ref()).collect::<Vec<&str>>();
 
         for action in actions {
             match action {
                 ThresholdAction::Event { title, text } => dd.event(&title, &text, &event_tags),
                 ThresholdAction::Custom(mut action) => {
-                    action(metric, &tags);
+                    action(metric, &tags, &seen);
                 }
             }
         }
@@ -164,11 +136,12 @@ enum ThresholdAction {
     /// Emit an event. The count of unique tag sets, per metric, is provided as the tags
     Event { title: String, text: String },
 
-    /// Take some custom action. The function will be passed the metric name and tags
+    /// Take some custom action. The function will be passed the metric name and tags, and
+    /// a BTreeMap<String, Vec<BTreeSet<String>>> of all the unique tag sets seen for each metric.
     Custom(ThresholdCustomAction),
 }
 
-type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str]) + Send + Sync>;
+type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str], &BTreeMap<String, Vec<BTreeSet<String>>>) + Send + Sync>;
 
 /// The configuration for the tag tracker. By default, the tag tracking is not enabled.
 /// To enable it, set the `count_threshold` to a non-zero value, and add at least one event
@@ -181,7 +154,7 @@ type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str]) + Send + Sync>;
 /// };
 /// let tracker_config = TagTrackerConfiguration::new()
 ///     .with_threshold(21)
-///     .with_custom_action(|_, _| {});
+///     .with_custom_action(|_, _, _| {});
 /// let configuration = PrimaConfiguration::new(
 ///     "0.0.0.0:1234",
 ///     "0.0.0.0:0",
@@ -230,11 +203,14 @@ impl TagTrackerConfiguration {
     /// # Example
     ///
     /// ```rust
-    /// prima_datadog::TagTrackerConfiguration::new().with_custom_action(|metric, tags| {
+    /// prima_datadog::TagTrackerConfiguration::new().with_custom_action(|metric, tags, _| {
     ///     println!("Exceeded custom metric threshold for metric {} with tags {:?}", metric, tags);
     /// });
     /// ```
-    pub fn with_custom_action(mut self, custom_action: impl FnMut(&str, &[&str]) + Send + Sync + 'static) -> Self {
+    pub fn with_custom_action(
+        mut self,
+        custom_action: impl FnMut(&str, &[&str], &BTreeMap<String, Vec<BTreeSet<String>>>) + Send + Sync + 'static,
+    ) -> Self {
         self.actions
             .push(ThresholdAction::Custom(Box::new(custom_action) as Box<_>));
         self
@@ -262,40 +238,5 @@ impl TagTrackerConfiguration {
 
     pub(crate) fn build(self) -> Tracker {
         Tracker::new(self.count_threshold, self.actions)
-    }
-}
-
-/// An iterator over tags, which can be rewound to the beginning.
-struct RewindableTagsIter<'a> {
-    tags: &'a mut dyn Iterator<Item = &'a str>,
-    cursor: usize,
-    len: usize,
-}
-impl RewindableTagsIter<'_> {
-    fn rewind(&mut self) -> &mut Self {
-        for _ in 0..(self.len - self.cursor) {
-            let _next = self.tags.next();
-            debug_assert!(_next.is_some(), "The `tags` in `RewindableTagsIter` should never stop returning items, use `.cycle()` to make it infinite");
-        }
-        self.cursor = 0;
-        self
-    }
-}
-impl<'a> Iterator for RewindableTagsIter<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.cursor < self.len {
-            self.cursor += 1;
-            self.tags.next()
-        } else {
-            None
-        }
-    }
-}
-impl ExactSizeIterator for RewindableTagsIter<'_> {
-    #[inline]
-    fn len(&self) -> usize {
-        self.len
     }
 }

@@ -300,7 +300,7 @@ impl<C: DogstatsdClient> Datadog<C> {
         if self.is_reporting_enabled {
             self.inner.incr(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -309,7 +309,7 @@ impl<C: DogstatsdClient> Datadog<C> {
         if self.is_reporting_enabled {
             self.inner.decr(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -319,7 +319,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.count(
                 metric.as_ref(),
                 count,
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -333,7 +333,7 @@ impl<C: DogstatsdClient> Datadog<C> {
         if self.is_reporting_enabled {
             self.inner.time(
                 metric.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
                 block,
             );
         }
@@ -344,7 +344,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.timing(
                 metric.as_ref(),
                 ms,
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -359,7 +359,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.gauge(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -374,7 +374,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.histogram(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -389,7 +389,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.distribution(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -404,7 +404,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.set(
                 metric.as_ref(),
                 value.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }
@@ -420,7 +420,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.service_check(
                 metric.as_ref(),
                 value,
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
                 options,
             );
         }
@@ -436,7 +436,7 @@ impl<C: DogstatsdClient> Datadog<C> {
             self.inner.event(
                 metric.as_ref(),
                 text.as_ref(),
-                self.tag_tracker.wrap_and_track(&self.inner, metric.as_ref(), tags),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
             );
         }
     }

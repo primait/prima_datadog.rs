@@ -8,7 +8,7 @@ fn setup(_: &mut Criterion) {
     // The custom action will do nothing, but does force tracking to occur
     let tracker_config = TagTrackerConfiguration::new()
         .with_threshold(21)
-        .with_custom_action(|_, _| {});
+        .with_custom_action(|_, _, _| {});
     let configuration = PrimaConfiguration::new(
         "0.0.0.0:1234",
         "0.0.0.0:0",
