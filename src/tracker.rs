@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     iter::FromIterator,
     sync::Mutex,
 };
@@ -118,7 +118,11 @@ impl Tracker {
             .collect::<Vec<_>>();
 
         let tags = tags.iter().map(|t| t.as_ref()).collect::<Vec<&str>>();
-
+        // Map from a BTreeMap<String, Vec<BTreeSet<String>>> to a HashMap<String, Vec<HashSet<String>>>
+        let seen: HashMap<String, Vec<HashSet<String>>> = seen
+            .into_iter()
+            .map(|(metric, sets)| (metric, sets.into_iter().map(|set| set.into_iter().collect()).collect()))
+            .collect();
         for action in actions {
             match action {
                 ThresholdAction::Event { title, text } => dd.event(&title, &text, &event_tags),
@@ -140,7 +144,7 @@ enum ThresholdAction {
     Custom(ThresholdCustomAction),
 }
 
-type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str], &BTreeMap<String, Vec<BTreeSet<String>>>) + Send + Sync>;
+type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str], &HashMap<String, Vec<HashSet<String>>>) + Send + Sync>;
 
 /// The configuration for the tag tracker. By default, the tag tracking is not enabled.
 /// To enable it, set the `count_threshold` to a non-zero value, and add at least one event
@@ -210,7 +214,7 @@ impl TagTrackerConfiguration {
     /// ```
     pub fn with_custom_action(
         mut self,
-        custom_action: impl FnMut(&str, &[&str], &BTreeMap<String, Vec<BTreeSet<String>>>) + Send + Sync + 'static,
+        custom_action: impl FnMut(&str, &[&str], &HashMap<String, Vec<HashSet<String>>>) + Send + Sync + 'static,
     ) -> Self {
         self.actions
             .push(ThresholdAction::Custom(Box::new(custom_action) as Box<_>));

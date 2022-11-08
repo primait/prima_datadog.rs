@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{HashMap, HashSet},
     sync::{atomic::AtomicBool, Arc},
 };
 
@@ -55,7 +55,7 @@ fn custom_action_is_run() {
     let expected_tags: Vec<_> = vec![format!("{}", threshold - 1)];
     let called = Arc::new(AtomicBool::new(false));
     let outer = called.clone();
-    let custom_action = move |metric: &str, tags: &[&str], _: &BTreeMap<String, Vec<BTreeSet<String>>>| {
+    let custom_action = move |metric: &str, tags: &[&str], _: &HashMap<String, Vec<HashSet<String>>>| {
         assert_eq!(metric, "test");
         assert!(tags.iter().all(|t| expected_tags.iter().any(|e| e == t)));
         assert!(tags.len() == expected_tags.len());
