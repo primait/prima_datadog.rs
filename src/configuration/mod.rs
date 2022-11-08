@@ -6,6 +6,8 @@ mod test;
 pub use prima::{Country, Environment, PrimaConfiguration};
 pub use test::TestConfiguration;
 
+use crate::TagTrackerConfiguration;
+
 /// A trait representing a valid configuration entity
 #[allow(clippy::wrong_self_convention)]
 pub trait Configuration {
@@ -20,6 +22,10 @@ pub trait Configuration {
     fn is_reporting_enabled(&self) -> bool;
     /// Default tags to be sent with every metric reporting
     fn default_tags(&self) -> Vec<String>;
+    /// Get the tag tracker configuration, and reset it to default. See [tracker::TagTrackerConfiguration]
+    fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
+        TagTrackerConfiguration::new()
+    }
 }
 
 impl Configuration for dogstatsd::Options {

@@ -238,3 +238,37 @@ pub fn event_mock(metric: &'static str, text: &'static str, tags: &'static [&str
 
     client_mock
 }
+
+pub fn expect_incr(mut mock: MockClient, metric: &'static str, tags: impl IntoIterator<Item = String>) -> MockClient {
+    let tags = tags.into_iter().collect::<Vec<_>>();
+    mock.expect_incr()
+        .once()
+        .with(
+            eq(metric),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(tag))),
+        )
+        .return_const(());
+
+    mock
+}
+
+pub fn expect_event(
+    mut mock: MockClient,
+    metric: &'static str,
+    text: &'static str,
+    tags: impl IntoIterator<Item = String>,
+) -> MockClient {
+    let tags = tags.into_iter().collect::<Vec<_>>();
+    mock.expect_event()
+        .once()
+        .with(
+            eq(metric),
+            eq(text),
+            function(move |called_tags: &Vec<String>| {
+                called_tags.iter().all(|tag| tags.contains(tag)) && called_tags.len() == tags.len()
+            }),
+        )
+        .return_const(());
+
+    mock
+}

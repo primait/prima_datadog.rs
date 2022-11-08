@@ -16,99 +16,107 @@ pub(super) trait MockDogstatsdClient {
     fn event(&self, title: &str, text: &str, tags: Vec<String>);
 }
 impl<C: MockDogstatsdClient> DogstatsdClient for C {
-    fn incr(&self, metric: &str, tags: impl TagsProvider) {
-        MockDogstatsdClient::incr(self, metric, tags.into_iter().map(|s| s.as_ref().to_string()).collect())
+    fn incr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>) {
+        MockDogstatsdClient::incr(
+            self,
+            metric,
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
+        )
     }
 
-    fn decr(&self, metric: &str, tags: impl TagsProvider) {
-        MockDogstatsdClient::decr(self, metric, tags.into_iter().map(|s| s.as_ref().to_string()).collect())
+    fn decr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>) {
+        MockDogstatsdClient::decr(
+            self,
+            metric,
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
+        )
     }
 
-    fn count(&self, metric: &str, count: i64, tags: impl TagsProvider) {
+    fn count<S: AsRef<str>>(&self, metric: &str, count: i64, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::count(
             self,
             metric,
             count,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn time(&self, metric: &str, tags: impl TagsProvider, block: impl FnOnce()) {
+    fn time<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce()) {
         MockDogstatsdClient::time(
             self,
             metric,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
             Box::new(block),
         )
     }
 
-    fn timing(&self, metric: &str, ms: i64, tags: impl TagsProvider) {
+    fn timing<S: AsRef<str>>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::timing(
             self,
             metric,
             ms,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn gauge(&self, metric: &str, val: &str, tags: impl TagsProvider) {
+    fn gauge<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::gauge(
             self,
             metric,
             val,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn histogram(&self, metric: &str, val: &str, tags: impl TagsProvider) {
+    fn histogram<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::histogram(
             self,
             metric,
             val,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn distribution(&self, metric: &str, val: &str, tags: impl TagsProvider) {
+    fn distribution<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::distribution(
             self,
             metric,
             val,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn set(&self, metric: &str, val: &str, tags: impl TagsProvider) {
+    fn set<S: AsRef<str>>(&self, metric: &str, val: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::set(
             self,
             metric,
             val,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 
-    fn service_check(
+    fn service_check<S: AsRef<str>>(
         &self,
         metric: &str,
         val: ServiceStatus,
-        tags: impl TagsProvider,
+        tags: impl TagsProvider<S>,
         options: Option<ServiceCheckOptions>,
     ) {
         MockDogstatsdClient::service_check(
             self,
             metric,
             val,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
             options,
         )
     }
 
-    fn event(&self, title: &str, text: &str, tags: impl TagsProvider) {
+    fn event<S: AsRef<str>>(&self, title: &str, text: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::event(
             self,
             title,
             text,
-            tags.into_iter().map(|s| s.as_ref().to_string()).collect(),
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
         )
     }
 }

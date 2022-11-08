@@ -2,6 +2,7 @@
 
 use crate::configuration::Configuration;
 use crate::error::Error as PrimaDatadogError;
+use crate::TagTrackerConfiguration;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -12,6 +13,7 @@ pub struct PrimaConfiguration {
     namespace: String,
     environment: Environment,
     tags: Vec<String>,
+    tracker: TagTrackerConfiguration,
 }
 
 impl PrimaConfiguration {
@@ -23,6 +25,7 @@ impl PrimaConfiguration {
             namespace: namespace.to_string(),
             environment,
             tags: vec![format!("env:{}", env_str)],
+            tracker: TagTrackerConfiguration::new(),
         }
     }
 
@@ -33,6 +36,11 @@ impl PrimaConfiguration {
 
     pub fn with_country(self, country: Country) -> Self {
         self.with_tag("prima:country", &country)
+    }
+
+    pub fn with_tracker_configuration(mut self, tracker: TagTrackerConfiguration) -> Self {
+        self.tracker = tracker;
+        self
     }
 }
 
@@ -55,6 +63,10 @@ impl Configuration for PrimaConfiguration {
 
     fn default_tags(&self) -> Vec<String> {
         self.tags.clone()
+    }
+
+    fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
+        std::mem::replace(&mut self.tracker, TagTrackerConfiguration::new())
     }
 }
 

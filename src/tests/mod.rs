@@ -14,6 +14,7 @@ mod service_check;
 mod set;
 mod time;
 mod timing;
+mod tracker;
 
 #[test]
 pub fn double_initialization() {

@@ -15,3 +15,8 @@ thiserror = { version = "1.0", default-features = false }
 [dev-dependencies]
 mockall = { version = "0.11", default-features = false }
 serial_test = { version = "0.8.0", default-features = false }
+criterion = "0.3"
+
+[[bench]]
+name = "basic_incr"
+harness = false
