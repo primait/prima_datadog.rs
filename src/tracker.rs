@@ -201,9 +201,9 @@ impl TagTrackerConfiguration {
 
     /// Add a custom action to execute when the custom metric threshold is reached.
     /// These actions are run exactly once, at the point the threshold is reached.
-    /// Any number of actions may be added. The function will be passed the metric name
-    /// and tags of the metric causing the crossing of the threshold, and a
-    /// BTreeMap<String, Vec<BTreeSet<String>>> of all the unique tag sets seen for each metric.
+    /// Any number of actions may be added. The function will be passed the metric name,
+    /// the tags of the metric causing the crossing of the threshold, and a
+    /// HashMap containing all the unique tag sets seen for each metric.
     ///
     /// # Example
     ///
