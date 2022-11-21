@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.5.0] - 2022-11-21
+## [0.4.0] - 2022-11-21
 
 ### Added
 - Added support for custom metric tracking via tag cardinality. See documentation in library header and `TagTrackerConfiguration`
-
+- No longer allocate when it can be avoided
 ---
 
 ## [0.3.1] - 2022-10-19
@@ -71,8 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5]
 
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...HEAD
-[0.5.0]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...0.5.0
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/primait/prima_datadog.rs/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/primait/prima_datadog.rs/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/primait/prima_datadog.rs/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/primait/prima_datadog.rs/compare/0.1.9...0.2.0
