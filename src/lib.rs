@@ -111,6 +111,7 @@
 //!
 //!   - [Datadog docs](https://docs.datadoghq.com/getting_started/)
 //!   - [Getting started with Datadog tags](https://docs.datadoghq.com/getting_started/tagging/)
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
 
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};

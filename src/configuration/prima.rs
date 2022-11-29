@@ -72,12 +72,24 @@ impl Configuration for PrimaConfiguration {
 
 /// Represent an environment in which the datadog client runs.
 /// This is useful for enforcing rules based on environment for every application that uses the library.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Environment {
     Dev,
     Qa,
     Staging,
     Production,
+}
+
+impl Environment {
+    /// Returns the string representation of the environment.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Environment::Dev => "dev",
+            Environment::Qa => "qa",
+            Environment::Staging => "staging",
+            Environment::Production => "production",
+        }
+    }
 }
 
 impl FromStr for Environment {
@@ -96,23 +108,67 @@ impl FromStr for Environment {
 
 impl Display for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Environment::Dev => write!(f, "dev"),
-            Environment::Qa => write!(f, "qa"),
-            Environment::Staging => write!(f, "staging"),
-            Environment::Production => write!(f, "production"),
+        f.write_str(self.as_str())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[cfg(feature = "serde")]
+impl serde::Serialize for Environment {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Environment {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct EnvironmentVisitor;
+        impl<'de> serde::de::Visitor<'de> for EnvironmentVisitor {
+            type Value = Environment;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a environment tag")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Environment::from_str(v).map_err(|_| E::custom("unknown environment tag"))
+            }
         }
+        deserializer.deserialize_str(EnvironmentVisitor)
     }
 }
 
 /// Represents the country in which the datadog client runs.
 /// This is useful for enforcing rules based on country for every application that uses the library.
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Country {
     Common,
     It,
     Es,
     Uk,
+}
+
+impl Country {
+    /// Returns the string representation of the country.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Country::Common => "common",
+            Country::It => "it",
+            Country::Es => "es",
+            Country::Uk => "uk",
+        }
+    }
 }
 
 impl FromStr for Country {
@@ -131,12 +187,44 @@ impl FromStr for Country {
 
 impl Display for Country {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Country::Common => write!(f, "common"),
-            Country::It => write!(f, "it"),
-            Country::Es => write!(f, "es"),
-            Country::Uk => write!(f, "uk"),
+        f.write_str(self.as_str())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[cfg(feature = "serde")]
+impl serde::Serialize for Country {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Country {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct CountryVisitor;
+        impl<'de> serde::de::Visitor<'de> for CountryVisitor {
+            type Value = Country;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a country tag")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Country::from_str(v).map_err(|_| E::custom("unknown country tag"))
+            }
         }
+        deserializer.deserialize_str(CountryVisitor)
     }
 }
 
@@ -184,5 +272,30 @@ mod tests {
             config.default_tags(),
             vec!["env:dev", "prima:country:it", "prima:country:es"]
         );
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_country_serde() {
+        for country in [Country::Common, Country::It, Country::Es, Country::Uk] {
+            let serialized = serde_json::to_string(&country).unwrap();
+            let deserialized: Country = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(country, deserialized);
+        }
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_environment_serde() {
+        for environment in [
+            Environment::Production,
+            Environment::Staging,
+            Environment::Qa,
+            Environment::Dev,
+        ] {
+            let serialized = serde_json::to_string(&environment).unwrap();
+            let deserialized: Environment = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(environment, deserialized);
+        }
     }
 }
