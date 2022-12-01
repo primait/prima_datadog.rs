@@ -8,7 +8,7 @@ macro_rules! gauge {
     ($stat:path, $val:expr) => {
         $crate::Datadog::gauge($stat.as_ref(), $val, $crate::EMPTY_TAGS);
     };
-    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $val:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::gauge($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $val:expr; $( $key:literal => $value:literal ), *) => {

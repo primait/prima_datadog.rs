@@ -8,7 +8,7 @@ macro_rules! histogram {
     ($stat:path, $val:expr) => {
         $crate::Datadog::histogram($stat.as_ref(), $val, $crate::EMPTY_TAGS);
     };
-    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $val:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::histogram($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $val:expr; $( $key:literal => $value:literal ), *) => {

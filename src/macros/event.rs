@@ -8,7 +8,7 @@ macro_rules! event {
     ($stat:expr, $text:expr) => {
         $crate::Datadog::event($stat, $text, $crate::EMPTY_TAGS);
     };
-    ($stat:expr, $text:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $text:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::event($stat, $text, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $text:expr; $( $key:literal => $value:literal ), *) => {
