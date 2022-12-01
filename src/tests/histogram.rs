@@ -1,3 +1,4 @@
+use crate::histogram;
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::Datadog;
@@ -34,4 +35,17 @@ pub fn histogram_with_type_and_tags() {
         "test_value",
         vec!["added:tag".to_string()],
     );
+}
+
+#[test]
+pub fn test_macro() {
+    let tag = String::from("tag");
+    // no tags
+    histogram!("test", "test_value");
+    // just literal tags
+    histogram!("test", "test_value"; "literal" => 1);
+    // just expression tags
+    histogram!("test", "test_value"; "expression" => tag);
+    // mixed tags
+    histogram!("test", "test_value"; "literal" => 1, "expression" => tag);
 }

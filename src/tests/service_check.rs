@@ -1,3 +1,4 @@
+use crate::service_check;
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::TagTrackerConfiguration;
@@ -55,5 +56,32 @@ pub fn service_check_with_type_and_tags() {
         ServiceStatus::OK,
         vec!["added:tag".to_string()],
         None,
+    );
+}
+
+#[test]
+fn test_macro() {
+    let tag = String::from("tag");
+    // no tags
+    service_check!("test", ServiceStatus::OK);
+    // just literal tags
+    service_check!("test", ServiceStatus::OK; "literal" => 1);
+    // just expression tags
+    service_check!("test", ServiceStatus::OK; "expression" => tag);
+    // mixed tags
+    service_check!("test", ServiceStatus::OK; "literal" => 1, "expression" => tag);
+    // no tags with options
+    service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
+    // just literal tags with options
+    service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default(); "literal" => 1);
+    // just expression tags with options
+    service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default(); "expression" => tag);
+    // mixed tags with options
+    service_check!(
+        "test",
+        ServiceStatus::OK,
+        ServiceCheckOptions::default();
+        "literal" => 1,
+        "expression" => tag
     );
 }

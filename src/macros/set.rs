@@ -8,7 +8,7 @@ macro_rules! set {
     ($stat:path, $val:expr) => {
         $crate::Datadog::set($stat.as_ref(), $val, $crate::EMPTY_TAGS);
     };
-    ($stat:expr, $val:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $val:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::set($stat, $val, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $val:expr; $( $key:literal => $value:literal ), *) => {

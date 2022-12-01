@@ -8,7 +8,7 @@ macro_rules! timing {
     ($stat:path, $ms:expr) => {
         $crate::Datadog::timing($stat.as_ref(), $ms, $crate::EMPTY_TAGS);
     };
-    ($stat:expr, $ms:expr; $( $key:expr => $value:expr ), *) => {
+    ($stat:expr, $ms:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::timing($stat, $ms, &[$(::core::concat!($key, ":", $value)), *]);
     };
     ($stat:path, $ms:expr; $( $key:literal => $value:literal ), *) => {

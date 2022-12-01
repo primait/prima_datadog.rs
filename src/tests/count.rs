@@ -1,3 +1,4 @@
+use crate::count;
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::Datadog;
@@ -30,4 +31,17 @@ pub fn count_with_type_and_tags() {
         10,
         vec!["added:tag".to_string()],
     );
+}
+
+#[test]
+pub fn test_macro() {
+    let tag = String::from("tag");
+    // no tags
+    count!("test", 10);
+    // just literal tags
+    count!("test", 10; "tag1" => "value1", "tag2" => "value2");
+    // just expression tags
+    count!("test", 10; tag => "value");
+    // mixed tags
+    count!("test", 1; "literal" => 1, "expression" => tag);
 }

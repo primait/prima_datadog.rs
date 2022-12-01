@@ -1,5 +1,6 @@
 use crate::tests::mocks;
 use crate::tests::TestEvent;
+use crate::time;
 use crate::Datadog;
 use crate::TagTrackerConfiguration;
 use crate::EMPTY_TAGS;
@@ -30,4 +31,17 @@ pub fn time_with_type_and_tags() {
         vec!["added:tag".to_string()],
         || {},
     );
+}
+
+#[test]
+pub fn test_macro() {
+    let tag = String::from("tag");
+    // no tags
+    time!("test", || {});
+    // just literal tags
+    time!("test", || {}; "literal" => 1);
+    // just expression tags
+    time!("test", || {}; "expression" => tag);
+    // mixed tags
+    time!("test", || {}; "literal" => 1, "expression" => tag);
 }
