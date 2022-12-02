@@ -24,11 +24,16 @@ impl TimingGuard {
 impl Drop for TimingGuard {
     fn drop(&mut self) {
         let elapsed = self.start.elapsed();
-        let Ok(ms) = elapsed.as_millis().try_into() else {
-            self.tags.push("overflowed".to_string());
-            Datadog::timing("experiments", i64::MAX, &self.tags);
-            return;
-        };
-        Datadog::timing("experiments", ms, &self.tags);
+        match elapsed.as_millis().try_into() {
+            Ok(millis) => Datadog::timing("experiment", millis, &self.tags),
+            Err(_) => {
+                // TODO - is it possible to filter on this in datadog? If not, I might need to
+                // always add an "overflowed" tag, and set it to "false" in cases where the conversion
+                // succeeded, and "true" otherwise
+                self.tags.push("overflowed".to_string());
+                Datadog::timing("experiments", i64::MAX, &self.tags);
+                return;
+            }
+        }
     }
 }
