@@ -1,3 +1,4 @@
+mod compare;
 mod count;
 mod decr;
 mod distribution;

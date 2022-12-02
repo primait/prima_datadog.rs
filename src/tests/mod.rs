@@ -2,6 +2,7 @@ use crate::configuration::{Environment, PrimaConfiguration};
 
 use super::*;
 
+mod compare;
 mod count;
 mod decr;
 mod distribution;

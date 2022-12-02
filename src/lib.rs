@@ -125,6 +125,7 @@ use crate::configuration::Configuration;
 use crate::error::Error;
 
 mod client;
+pub mod compare;
 pub mod configuration;
 pub mod error;
 mod macros;
@@ -285,6 +286,19 @@ impl Datadog<dogstatsd::Client> {
         if let Some(instance) = INSTANCE.get() {
             instance.do_event(metric.as_ref(), text.as_ref(), tags);
         }
+    }
+
+    /// Start measuring a particular path through a region of code being compared
+    /// When this guard is dropped, it will emit a timing metric for the duration it
+    /// existed. The timing data is emitted under the "experiments" metric, tagged with the
+    /// given tags, plus "name:<experiment_name>" and "path_taken:<path>". If more than
+    /// i64::MAX milliseconds have elapsed, the metric will also be tagged with "overflowed".
+    pub fn enter_compare<S: AsRef<str>, P: TagsProvider<S>>(
+        experiment_name: impl AsRef<str>,
+        path: usize,
+        tags: P,
+    ) -> compare::TimingGuard {
+        compare::TimingGuard::new(experiment_name, path, tags)
     }
 }
 
