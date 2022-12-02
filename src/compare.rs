@@ -32,7 +32,6 @@ impl Drop for TimingGuard {
                 // succeeded, and "true" otherwise
                 self.tags.push("overflowed".to_string());
                 Datadog::timing("experiments", i64::MAX, &self.tags);
-                return;
             }
         }
     }
