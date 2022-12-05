@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] - 2022-12-05
+
 ### Added
 - A `TimingGuard` guard struct, for more flexible execution time tracking
 - The `compare!` macro, for running experiments in production
@@ -79,7 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5]
 
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...HEAD
+
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/primait/prima_datadog.rs/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/primait/prima_datadog.rs/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/primait/prima_datadog.rs/compare/0.2.0...0.3.0
