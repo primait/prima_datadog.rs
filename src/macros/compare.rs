@@ -16,7 +16,7 @@
 /// ```
 /// The above code will run the first block passed, and after execution,
 /// will emit a timing metric to datadog. The metric will be named with
-/// the value of EXPERIMENTS_METRIC_NAME, and will be tagged with the name
+/// the value of [EXPERIMENTS_METRIC_NAME](crate::timing_guard::EXPERIMENTS_METRIC_NAME), and will be tagged with the name
 /// of the experiment ("experiment_name:test"), the path taken ("path_taken:0"),
 /// and any additional tags provided ("some:tag").
 ///
