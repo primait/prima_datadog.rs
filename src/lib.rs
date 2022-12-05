@@ -291,8 +291,10 @@ impl Datadog<dogstatsd::Client> {
     /// Start measuring a particular path through a region of code being compared
     /// When this guard is dropped, it will emit a timing metric for the duration it
     /// existed. The timing data is emitted under the "experiments" metric, tagged with the
-    /// given tags, plus "name:<experiment_name>" and "path_taken:<path>". If more than
+    /// given tags, plus "experiment_name:<experiment_name>" and "path_taken:<path>". If more than
     /// i64::MAX milliseconds have elapsed, the metric will also be tagged with "overflowed".
+    /// This is extremely unlikely, since it would require the guard to be held for over
+    /// 24 days
     pub fn enter_compare<S: AsRef<str>, P: TagsProvider<S>>(
         experiment_name: impl AsRef<str>,
         path: usize,

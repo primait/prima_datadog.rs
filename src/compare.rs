@@ -18,7 +18,7 @@ impl TimingGuard {
         res.tags.push(format!("path_taken:{}", path));
         // All comparisons go under an "experiment" metric, and then we tag each comparison with the name of the experiment
         // This is to make it easy to browse all the different experiments in datadog by looking at the metric information
-        res.tags.push(format!("name:{}", name.as_ref()));
+        res.tags.push(format!("experiment_name:{}", name.as_ref()));
         res
     }
 }
