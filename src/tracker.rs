@@ -6,7 +6,7 @@ use std::{
 
 use crate::{DogstatsdClient, TagsProvider};
 
-/// See https://www.datadoghq.com/pricing/ and https://docs.datadoghq.com/account_management/billing/custom_metrics/,
+/// See <https://www.datadoghq.com/pricing/> and <https://docs.datadoghq.com/account_management/billing/custom_metrics/>,
 ///
 /// 100 seems like a reasonable place to start warning for now
 pub const DEFAULT_TAG_THRESHOLD: usize = 100;
@@ -234,7 +234,7 @@ impl TagTrackerConfiguration {
     /// - [a, c, d]
     /// is counted as 3 "custom metrics", as there are 3 unique tag sets here.
     ///
-    /// See https://docs.datadoghq.com/developers/metrics/custom_metrics/ for
+    /// See <https://docs.datadoghq.com/developers/metrics/custom_metrics/> for
     /// more information.
     pub fn with_threshold(mut self, count_threshold: usize) -> Self {
         self.count_threshold = count_threshold;
