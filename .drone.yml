@@ -16,12 +16,13 @@ steps:
     PLUGIN_DEPTH: 5
 
 - name: cache-restore
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - . /etc/profile.d/ecs-credentials-endpoint
   - cache-restore
   environment:
     BUCKET_NAME: prima-ci-cache
+    CACHE_COMPRESSION_ALGO: gz
   volumes:
   - name: ecs
     path: /etc/profile.d/ecs-credentials-endpoint
@@ -31,7 +32,7 @@ steps:
   - git-clone
 
 - name: check-secrets
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - . /etc/profile.d/ecs-credentials-endpoint
   - check-secrets-grants
@@ -42,17 +43,19 @@ steps:
   - git-clone
 
 - name: check-public-docker-images
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - check-public-docker-images
   depends_on:
   - git-clone
 
 - name: build-image
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - sed -i 's/USER app/USER root/g' ./Dockerfile
   - docker build -t prima/prima_datadog.rs-ci:${DRONE_COMMIT} ./
+  environment:
+    DOCKER_DEFAULT_PLATFORM: linux/amd64
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -87,6 +90,16 @@ steps:
   depends_on:
   - cargo-format
 
+- name: cargo-rustdoc-ci
+  image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
+  commands:
+  - cargo make --profile drone rustdoc-ci
+  environment:
+    BUILD_ENV: dev
+    CARGO_HOME: /drone/src/.cargo
+  depends_on:
+  - cargo-format
+
 - name: cargo-test
   image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
   commands:
@@ -94,9 +107,9 @@ steps:
   environment:
     BUILD_ENV: dev
     CARGO_HOME: /drone/src/.cargo
-    CARGO_HTTP_CAINFO: ""
   depends_on:
   - cargo-clippy-ci
+  - cargo-rustdoc-ci
 
 - name: cargo-build
   image: prima/prima_datadog.rs-ci:${DRONE_COMMIT}
@@ -123,15 +136,17 @@ steps:
   - cargo-build
   - cargo-format
   - cargo-clippy-ci
+  - cargo-rustdoc-ci
   - cargo-test
 
 - name: cache-save
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - . /etc/profile.d/ecs-credentials-endpoint
-  - cache-save target
+  - cache-save .cargo
   environment:
     BUCKET_NAME: prima-ci-cache
+    CACHE_COMPRESSION_ALGO: gz
   volumes:
   - name: ecs
     path: /etc/profile.d/ecs-credentials-endpoint
@@ -173,12 +188,13 @@ steps:
     PLUGIN_DEPTH: 5
 
 - name: cache-restore
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - . /etc/profile.d/ecs-credentials-endpoint
   - cache-restore
   environment:
     BUCKET_NAME: prima-ci-cache
+    CACHE_COMPRESSION_ALGO: gz
   volumes:
   - name: ecs
     path: /etc/profile.d/ecs-credentials-endpoint
@@ -188,10 +204,12 @@ steps:
   - git-clone
 
 - name: build-image
-  image: public.ecr.aws/prima/drone-tools:1.21.3
+  image: public.ecr.aws/prima/drone-tools:1.22.1
   commands:
   - sed -i 's/USER app/USER root/g' ./Dockerfile
   - docker build -t prima/prima_datadog.rs-ci:${DRONE_COMMIT} ./
+  environment:
+    DOCKER_DEFAULT_PLATFORM: linux/amd64
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -264,6 +282,6 @@ depends_on:
 
 ---
 kind: signature
-hmac: 0ce3c0024f817c33a13bd46c254a2cc5fafee51e37ac1b1371c3fc0c76a269c3
+hmac: cc31b058693df2e7cafc93e9b3065b28aa01df8c2f85a2b08055bc129e69f490
 
 ...
