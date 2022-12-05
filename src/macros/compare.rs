@@ -1,77 +1,71 @@
 /// Run an experiment comparing the execution time of two blocks of code
+/// Example:
+/// ```
+/// use prima_datadog::{*};
+/// // Imagine this was a random number generator (or a network request to an experiment management service, or anything you want)
+/// let choice = 0;
+/// compare!("test", choice, || {}, || {}; "some" => "tag");
+/// ```
+/// The above code will run the first block passed, and after execution,
+/// will emit a timing metric to datadog. The metric will be named with
+/// the value of EXPERIMENTS_METRIC_NAME, and will be tagged with the name
+/// of the experiment ("experiment_name:test"), the path taken ("path_taken:0"),
+/// and any additional tags provided ("some:tag").
+///
+/// The blocks can be arbitrary code, and the macro is async-safe. In an async context,
+/// the timing will continue across await points, which means that if, for example, you
+/// are awaiting a network request, the timing will include the time spent waiting for
+/// the network request to complete.
+///
 /// NOTE: Try to minimise variation in tag values (avoid things like timestamps or ids). See note in lib docs!
 #[macro_export]
 macro_rules! compare {
     ($name:expr, $path_taken:expr, || $block_1:expr, || $block_2:expr) => {
+    {
+        use $crate::timing_guard::EXPERIMENTS_METRIC_NAME;
+        let prima_datadog_experiment_tags = &[::std::format!("experiment_name:{}", $name), ::std::format!("path_taken:{}", $path_taken)];
+        let _prima_datadog_timing_guard = $crate::Datadog::enter_timing(EXPERIMENTS_METRIC_NAME, prima_datadog_experiment_tags);
         if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_1
         } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_2
         }
+    }
     };
     ($name:expr, $path_taken:expr, move || $block_1:expr, move || $block_2:expr) => {
+    {
+        use $crate::timing_guard::EXPERIMENTS_METRIC_NAME;
+        let prima_datadog_experiment_tags = &[::std::format!("experiment_name:{}", $name), ::std::format!("path_taken:{}", $path_taken)];
+        let _prima_datadog_timing_guard = $crate::Datadog::enter_timing(EXPERIMENTS_METRIC_NAME, prima_datadog_experiment_tags);
         if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_1
         } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_2
         }
-    };
-    ($name:path, $path_taken:expr, || $block_1:expr, || $block_2:expr) => {
-        if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref() $path_taken, $crate::EMPTY_TAGS);
-            $block_1
-        } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, $crate::EMPTY_TAGS);
-            $block_2
-        }
-    };
-    ($name:path, $path_taken:expr, move || $block_1:expr, move || $block_2:expr) => {
-        if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, $crate::EMPTY_TAGS);
-            $block_1
-        } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, $crate::EMPTY_TAGS);
-            $block_2
-        }
+    }
     };
     ($name:expr, $path_taken:expr, || $block_1:expr, || $block_2:expr; $( $key:expr => $value:expr ), *) => {
+    {
+        use $crate::timing_guard::EXPERIMENTS_METRIC_NAME;
+        let prima_datadog_experiment_tags = &[::std::format!("experiment_name:{}", $name), ::std::format!("path_taken:{}", $path_taken), $(::std::format!("{}:{}", $key, $value)), *];
+        let _prima_datadog_timing_guard = $crate::Datadog::enter_timing(EXPERIMENTS_METRIC_NAME, prima_datadog_experiment_tags);
         if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
             $block_1
         } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_2
         }
+    }
     };
     ($name:expr, $path_taken:expr, move || $block_1:expr, move || $block_2:expr; $( $key:expr => $value:expr ), *) => {
+    {
+        use $crate::timing_guard::EXPERIMENTS_METRIC_NAME;
+        let prima_datadog_experiment_tags = &[::std::format!("experiment_name:{}", $name), ::std::format!("path_taken:{}", $path_taken), $(::std::format!("{}:{}", $key, $value)), *];
+        let _prima_datadog_timing_guard = $crate::Datadog::enter_timing(EXPERIMENTS_METRIC_NAME, prima_datadog_experiment_tags);
         if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
             $block_1
         } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name, $path_taken, $crate::EMPTY_TAGS);
             $block_2
         }
-    };
-    ($name:path, $path_taken:expr, || $block_1:expr, || $block_2:expr; $( $key:expr => $value:expr ), *) => {
-        if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
-            $block_1
-        } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, $crate::EMPTY_TAGS);
-            $block_2
-        }
-    };
-    ($name:path, $path_taken:expr, move || $block_1:expr, move || $block_2:expr; $( $key:expr => $value:expr ), *) => {
-        if $path_taken == 0 {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, &[$(::std::format!("{}:{}", $key, $value).as_str()), *]);
-            $block_1
-        } else {
-            let _timing_guard = $crate::Datadog::enter_compare($name.as_ref(), $path_taken, $crate::EMPTY_TAGS);
-            $block_2
-        }
+    }
     };
 }

@@ -125,10 +125,10 @@ use crate::configuration::Configuration;
 use crate::error::Error;
 
 mod client;
-pub mod compare;
 pub mod configuration;
 pub mod error;
 mod macros;
+pub mod timing_guard;
 pub mod tracker;
 
 #[cfg(test)]
@@ -288,19 +288,14 @@ impl Datadog<dogstatsd::Client> {
         }
     }
 
-    /// Start measuring a particular path through a region of code being compared
+    /// Acquire a timing guard.
     /// When this guard is dropped, it will emit a timing metric for the duration it
-    /// existed. The timing data is emitted under the "experiments" metric, tagged with the
-    /// given tags, plus "experiment_name:<experiment_name>" and "path_taken:<path>". If more than
-    /// i64::MAX milliseconds have elapsed, the metric will also be tagged with "overflowed".
-    /// This is extremely unlikely, since it would require the guard to be held for over
-    /// 24 days
-    pub fn enter_compare<S: AsRef<str>, P: TagsProvider<S>>(
-        experiment_name: impl AsRef<str>,
-        path: usize,
+    /// existed. The metric name is metric, and the tags are tags.
+    pub fn enter_timing<S: AsRef<str>, P: TagsProvider<S>>(
+        metric: impl AsRef<str>,
         tags: P,
-    ) -> compare::TimingGuard {
-        compare::TimingGuard::new(experiment_name, path, tags)
+    ) -> timing_guard::TimingGuard<S, P> {
+        timing_guard::TimingGuard::new(metric, tags)
     }
 }
 
