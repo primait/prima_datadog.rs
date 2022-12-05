@@ -41,7 +41,7 @@ where
         match elapsed.as_millis().try_into() {
             Ok(millis) => Datadog::timing(&self.name, millis, &self.tags),
             Err(_) => {
-                let mut tags: Vec<_> = self.tags.as_ref().into_iter().map(|t| t.as_ref()).collect();
+                let mut tags: Vec<_> = self.tags.as_ref().iter().map(|t| t.as_ref()).collect();
                 tags.push("overflowed");
                 Datadog::timing(EXPERIMENTS_METRIC_NAME, i64::MAX, tags);
             }
