@@ -59,6 +59,11 @@ args = ["fmt", "--all", "--", "--check"]
 command = "cargo"
 args = ["clippy", "--", "-D", "warnings"]
 
+[tasks.rustdoc-ci]
+command = "cargo"
+args = ["doc", "--document-private-items", "--workspace", "--all-features", "--no-deps"]
+env = {"RUSTDOCFLAGS" = "-Dwarnings" }
+
 [tasks.build-ci]
 description = "Build inside CI."
 command = "cargo"
