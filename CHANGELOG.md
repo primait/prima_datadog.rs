@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A `TimingGuard` guard struct, for more flexible execution time tracking
+- The `compare!` macro, for running experiments in production
+
+### Changed
+- Fixed 0.4.0 backwards compatibility, relating to errors in some macro definitions
+- Fixed various documentation errors
+
 ---
 
 ## [0.4.0] - 2022-11-21
