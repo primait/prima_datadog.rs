@@ -2,6 +2,8 @@ use std::{convert::TryInto, time::Instant};
 
 use crate::{Datadog, TagsProvider};
 
+const EXPERIMENTS_METRIC_NAME: &str = "experiments";
+
 pub struct TimingGuard {
     start: Instant,
     tags: Vec<String>,
@@ -25,13 +27,13 @@ impl Drop for TimingGuard {
     fn drop(&mut self) {
         let elapsed = self.start.elapsed();
         match elapsed.as_millis().try_into() {
-            Ok(millis) => Datadog::timing("experiment", millis, &self.tags),
+            Ok(millis) => Datadog::timing(EXPERIMENTS_METRIC_NAME, millis, &self.tags),
             Err(_) => {
                 // TODO - is it possible to filter on this in datadog? If not, I might need to
                 // always add an "overflowed" tag, and set it to "false" in cases where the conversion
                 // succeeded, and "true" otherwise
                 self.tags.push("overflowed".to_string());
-                Datadog::timing("experiments", i64::MAX, &self.tags);
+                Datadog::timing(EXPERIMENTS_METRIC_NAME, i64::MAX, &self.tags);
             }
         }
     }
