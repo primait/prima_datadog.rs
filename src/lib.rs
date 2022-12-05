@@ -102,7 +102,7 @@
 //! It's important to avoid passing a large number of values for a given tag, as Datadog tracks each
 //! unique combination of tag values as a separate metric, which can significantly impact billing.
 //! For example, avoid passing things like user IDs, session IDs, request IDs, or other values that
-//! vary significantly. See https://docs.datadoghq.com/getting_started/tagging/ for more information.
+//! vary significantly. See <https://docs.datadoghq.com/getting_started/tagging/> for more information.
 //!
 //! Users may configure some actions to be taken when a metric cardinality threshold is exceeded. See
 //! [tracker::TagTrackerConfiguration] for more information.
@@ -128,6 +128,7 @@ mod client;
 pub mod configuration;
 pub mod error;
 mod macros;
+pub mod timing_guard;
 pub mod tracker;
 
 #[cfg(test)]
@@ -285,6 +286,16 @@ impl Datadog<dogstatsd::Client> {
         if let Some(instance) = INSTANCE.get() {
             instance.do_event(metric.as_ref(), text.as_ref(), tags);
         }
+    }
+
+    /// Acquire a timing guard.
+    /// When this guard is dropped, it will emit a timing metric for the duration it
+    /// existed. The metric name is metric, and the tags are tags.
+    pub fn enter_timing<S: AsRef<str>, P: TagsProvider<S>>(
+        metric: impl AsRef<str>,
+        tags: P,
+    ) -> timing_guard::TimingGuard<S, P> {
+        timing_guard::TimingGuard::new(metric, tags)
     }
 }
 
