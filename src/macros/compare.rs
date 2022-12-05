@@ -1,10 +1,18 @@
 /// Run an experiment comparing the execution time of two blocks of code
 /// Example:
 /// ```
-/// use prima_datadog::{*};
-/// // Imagine this was a random number generator (or a network request to an experiment management service, or anything you want)
-/// let choice = 0;
-/// compare!("test", choice, || {}, || {}; "some" => "tag");
+/// # use rand::prelude::*;
+/// # use prima_datadog::compare;
+/// # use std::thread::sleep;
+/// # use std::time::Duration;
+/// # let mut rng = thread_rng();
+/// // This could also be a network request to an experiment management service, or anything you want
+/// let path = rng.gen_range(0..2);
+/// compare!("test", path, || {
+///     sleep(Duration::from_millis(rng.gen_range(5..10)));
+/// }, || {
+///     sleep(Duration::from_millis(rng.gen_range(5..12)));
+/// }; "some" => "tag");
 /// ```
 /// The above code will run the first block passed, and after execution,
 /// will emit a timing metric to datadog. The metric will be named with
