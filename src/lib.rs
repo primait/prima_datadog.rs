@@ -114,6 +114,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc(issue_tracker_base_url = "https://github.com/primait/prima_datadog.rs/issues")]
 
+use std::future::Future;
+
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
@@ -228,9 +230,28 @@ impl Datadog<dogstatsd::Client> {
     }
 
     /// Time a block of code (reports in ms)
-    pub fn time<S: AsRef<str>>(metric: impl AsRef<str>, tags: impl TagsProvider<S>, block: impl FnOnce()) {
+    pub fn time<S, F, O>(metric: impl AsRef<str>, tags: impl TagsProvider<S>, block: F) -> O
+    where
+        S: AsRef<str>,
+        F: FnOnce() -> O,
+    {
         if let Some(instance) = INSTANCE.get() {
-            instance.do_time(metric.as_ref(), tags, block);
+            instance.do_time(metric.as_ref(), tags, block)
+        } else {
+            block()
+        }
+    }
+
+    pub async fn async_time<S, F, T, O>(&self, metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
+    where
+        S: AsRef<str> + Sync,
+        F: FnOnce() -> T + Send,
+        T: Future<Output = O> + Send,
+    {
+        if let Some(instance) = INSTANCE.get() {
+            instance.do_async_time(metric.as_ref(), tags, block).await
+        } else {
+            block().await
         }
     }
 
@@ -336,18 +357,43 @@ impl<C: DogstatsdClient> Datadog<C> {
         }
     }
 
-    pub(crate) fn do_time<S: AsRef<str>>(
-        &self,
-        metric: impl AsRef<str>,
-        tags: impl TagsProvider<S>,
-        block: impl FnOnce(),
-    ) {
+    pub(crate) fn do_time<S, F, O>(&self, metric: impl AsRef<str>, tags: impl TagsProvider<S>, block: F) -> O
+    where
+        S: AsRef<str>,
+        F: FnOnce() -> O,
+    {
         if self.is_reporting_enabled {
             self.inner.time(
                 metric.as_ref(),
                 self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
                 block,
-            );
+            )
+        } else {
+            block()
+        }
+    }
+
+    pub(crate) async fn do_async_time<S, F, T, O>(
+        &self,
+        metric: &str,
+        tags: impl TagsProvider<S> + Send + Sync,
+        block: F,
+    ) -> O
+    where
+        S: AsRef<str> + Sync,
+        F: FnOnce() -> T + Send,
+        T: Future<Output = O> + Send,
+    {
+        if self.is_reporting_enabled {
+            self.inner
+                .async_time(
+                    metric.as_ref(),
+                    self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+                    block,
+                )
+                .await
+        } else {
+            block().await
         }
     }
 

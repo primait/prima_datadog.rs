@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use mockall::{mock, predicate::*};
 
 use crate::*;
@@ -7,6 +8,7 @@ use dogstatsd_client::*;
 
 mock! {
     pub Client {}
+    #[async_trait]
     impl MockDogstatsdClient for Client {
         /// Increment a StatsD counter
         fn incr(&self, metric: &str, tags: Vec<String>);
@@ -18,7 +20,7 @@ mock! {
         fn count(&self, metric: &str, count: i64, tags: Vec<String>);
 
         /// Time how long it takes for a block of code to execute
-        fn time<'a>(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce() + 'a>);
+        fn time(&self, metric: &str, tags: Vec<String>);
 
         /// Send your own timing metric in milliseconds
         fn timing(&self, metric: &str, ms: i64, tags: Vec<String>);
@@ -104,7 +106,6 @@ pub fn time_mock(metric: &'static str, tags: &'static [&str]) -> MockClient {
         .with(
             eq(metric),
             function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
-            always(),
         )
         .return_const(());
 

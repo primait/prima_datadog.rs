@@ -1,8 +1,13 @@
+use std::future::Future;
+
+use async_trait::async_trait;
+
 use crate::{ServiceCheckOptions, ServiceStatus, TagsProvider};
 
 /// This trait represent a client that is able to interact with the datadog statsd collector.
 /// Its main use in this library is having a common interface for the underlying implementation,
 /// and being able to mock it for testing purposes
+#[async_trait]
 pub trait DogstatsdClient {
     /// Increment a StatsD counter
     fn incr<S>(&self, metric: &str, tags: impl TagsProvider<S>)
@@ -20,9 +25,16 @@ pub trait DogstatsdClient {
         S: AsRef<str>;
 
     /// Time how long it takes for a block of code to execute
-    fn time<S>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce())
+    fn time<S, F, O>(&self, metric: &str, tags: impl TagsProvider<S>, block: F) -> O
     where
-        S: AsRef<str>;
+        S: AsRef<str>,
+        F: FnOnce() -> O;
+
+    async fn async_time<S, F, T, O>(&self, metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
+    where
+        S: AsRef<str> + Sync,
+        F: FnOnce() -> T + Send,
+        T: Future<Output = O> + Send;
 
     /// Send your own timing metric in milliseconds
     fn timing<S>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>)
@@ -65,6 +77,7 @@ pub trait DogstatsdClient {
         S: AsRef<str>;
 }
 
+#[async_trait]
 impl DogstatsdClient for dogstatsd::Client {
     fn incr<S>(&self, metric: &str, tags: impl TagsProvider<S>)
     where
@@ -87,11 +100,23 @@ impl DogstatsdClient for dogstatsd::Client {
         let _ = self.count(metric, count, tags.as_ref());
     }
 
-    fn time<S>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce())
+    fn time<S, F, O>(&self, metric: &str, tags: impl TagsProvider<S>, block: F) -> O
     where
         S: AsRef<str>,
+        F: FnOnce() -> O,
     {
-        let _ = self.time(metric, tags.as_ref(), block);
+        self.time(metric, tags.as_ref(), block).unwrap_or_else(|(o, _)| o)
+    }
+
+    async fn async_time<S, F, T, O>(&self, metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
+    where
+        S: AsRef<str> + Sync,
+        F: FnOnce() -> T + Send,
+        T: Future<Output = O> + Send,
+    {
+        self.async_time(metric, tags.as_ref(), block)
+            .await
+            .unwrap_or_else(|(o, _)| o)
     }
 
     fn timing<S>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>)
