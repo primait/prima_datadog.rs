@@ -242,7 +242,7 @@ impl Datadog<dogstatsd::Client> {
         }
     }
 
-    pub async fn async_time<S, F, T, O>(&self, metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
+    pub async fn async_time<S, F, T, O>(metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
     where
         S: AsRef<str> + Sync,
         F: FnOnce() -> T + Send,
