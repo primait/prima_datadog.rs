@@ -1,3 +1,7 @@
+use std::future::Future;
+
+use async_trait::async_trait;
+
 use super::*;
 
 /// The `mock!` macro isn't very good with lifetimes or generics
@@ -6,7 +10,7 @@ pub(super) trait MockDogstatsdClient {
     fn incr(&self, metric: &str, tags: Vec<String>);
     fn decr(&self, metric: &str, tags: Vec<String>);
     fn count(&self, metric: &str, count: i64, tags: Vec<String>);
-    fn time<'a>(&self, metric: &str, tags: Vec<String>, block: Box<dyn FnOnce() + 'a>);
+    fn time(&self, metric: &str, tags: Vec<String>);
     fn timing(&self, metric: &str, ms: i64, tags: Vec<String>);
     fn gauge(&self, metric: &str, val: &str, tags: Vec<String>);
     fn histogram(&self, metric: &str, val: &str, tags: Vec<String>);
@@ -15,7 +19,9 @@ pub(super) trait MockDogstatsdClient {
     fn service_check(&self, metric: &str, val: ServiceStatus, tags: Vec<String>, options: Option<ServiceCheckOptions>);
     fn event(&self, title: &str, text: &str, tags: Vec<String>);
 }
-impl<C: MockDogstatsdClient> DogstatsdClient for C {
+
+#[async_trait]
+impl<C: MockDogstatsdClient + Sync> DogstatsdClient for C {
     fn incr<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>) {
         MockDogstatsdClient::incr(
             self,
@@ -41,13 +47,31 @@ impl<C: MockDogstatsdClient> DogstatsdClient for C {
         )
     }
 
-    fn time<S: AsRef<str>>(&self, metric: &str, tags: impl TagsProvider<S>, block: impl FnOnce()) {
+    fn time<S, F, O>(&self, metric: &str, tags: impl TagsProvider<S>, block: F) -> O
+    where
+        S: AsRef<str>,
+        F: FnOnce() -> O,
+    {
         MockDogstatsdClient::time(
             self,
             metric,
             tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
-            Box::new(block),
-        )
+        );
+        block()
+    }
+
+    async fn async_time<S, F, T, O>(&self, metric: &str, tags: impl TagsProvider<S> + Send + Sync, block: F) -> O
+    where
+        S: AsRef<str> + Sync,
+        F: FnOnce() -> T + Send,
+        T: Future<Output = O> + Send,
+    {
+        MockDogstatsdClient::time(
+            self,
+            metric,
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
+        );
+        block().await
     }
 
     fn timing<S: AsRef<str>>(&self, metric: &str, ms: i64, tags: impl TagsProvider<S>) {

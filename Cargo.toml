@@ -8,10 +8,11 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dogstatsd = { version = "0.8", default-features = false }
+dogstatsd = { version = "0.8.1", default-features = false }
 once_cell = { version = "1.9", default-features = false, features = ["std"] }
 thiserror = { version = "1.0", default-features = false }
 serde = { version = "1", optional = true }
+async-trait = "0.1"
 
 [dev-dependencies]
 mockall = { version = "0.11", default-features = false }
