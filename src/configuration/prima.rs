@@ -153,7 +153,6 @@ impl<'de> serde::Deserialize<'de> for Environment {
 /// This is useful for enforcing rules based on country for every application that uses the library.
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Country {
-    Common,
     It,
     Es,
     Uk,
@@ -163,7 +162,6 @@ impl Country {
     /// Returns the string representation of the country.
     pub fn as_str(&self) -> &'static str {
         match self {
-            Country::Common => "common",
             Country::It => "it",
             Country::Es => "es",
             Country::Uk => "uk",
@@ -176,7 +174,6 @@ impl FromStr for Country {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "common" => Ok(Self::Common),
             "it" => Ok(Self::It),
             "es" => Ok(Self::Es),
             "uk" => Ok(Self::Uk),
@@ -277,7 +274,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn test_country_serde() {
-        for country in [Country::Common, Country::It, Country::Es, Country::Uk] {
+        for country in [Country::It, Country::Es, Country::Uk] {
             let serialized = serde_json::to_string(&country).unwrap();
             let deserialized: Country = serde_json::from_str(&serialized).unwrap();
             assert_eq!(country, deserialized);
