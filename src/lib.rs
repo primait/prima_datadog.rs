@@ -191,6 +191,8 @@ impl Datadog<dogstatsd::Client> {
                 configuration.to_addr(),
                 configuration.namespace(),
                 configuration.default_tags(),
+                configuration.socket_path(),
+                configuration.batching_options(),
             );
 
             let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;

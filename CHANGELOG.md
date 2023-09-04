@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Socket path and batching options can now be optionally set as part of the configuration
+
 ---
 
 ## [0.5.0] - 2022-12-05
 
 ### Added
+
 - A `TimingGuard` guard struct, for more flexible execution time tracking
 - The `compare!` macro, for running experiments in production
 
 ### Changed
+
 - Fixed 0.4.0 backwards compatibility, relating to errors in some macro definitions
 - Fixed various documentation errors
 
@@ -24,8 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.0] - 2022-11-21
 
 ### Added
+
 - Added support for custom metric tracking via tag cardinality. See documentation in library header and `TagTrackerConfiguration`
 - No longer allocate when it can be avoided
+
 ---
 
 ## [0.3.1] - 2022-10-19
@@ -81,8 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.1.5]
-
-
 
 [Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...HEAD
 [0.5.0]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...0.5.0

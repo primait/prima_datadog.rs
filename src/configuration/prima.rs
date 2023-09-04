@@ -14,6 +14,8 @@ pub struct PrimaConfiguration {
     environment: Environment,
     tags: Vec<String>,
     tracker: TagTrackerConfiguration,
+    socket_path: Option<String>,
+    batching_options: Option<dogstatsd::BatchingOptions>,
 }
 
 impl PrimaConfiguration {
@@ -26,6 +28,8 @@ impl PrimaConfiguration {
             environment,
             tags: vec![format!("env:{}", env_str)],
             tracker: TagTrackerConfiguration::new(),
+            socket_path: None,
+            batching_options: None,
         }
     }
 
@@ -40,6 +44,16 @@ impl PrimaConfiguration {
 
     pub fn with_tracker_configuration(mut self, tracker: TagTrackerConfiguration) -> Self {
         self.tracker = tracker;
+        self
+    }
+
+    pub fn with_socket_path(mut self, socket_path: String) -> Self {
+        self.socket_path = Some(socket_path);
+        self
+    }
+
+    pub fn with_batching_options(mut self, batching_options: dogstatsd::BatchingOptions) -> Self {
+        self.batching_options = Some(batching_options);
         self
     }
 }
@@ -67,6 +81,14 @@ impl Configuration for PrimaConfiguration {
 
     fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
         std::mem::replace(&mut self.tracker, TagTrackerConfiguration::new())
+    }
+
+    fn socket_path(&self) -> Option<String> {
+        self.socket_path.clone()
+    }
+
+    fn batching_options(&self) -> Option<dogstatsd::BatchingOptions> {
+        self.batching_options
     }
 }
 

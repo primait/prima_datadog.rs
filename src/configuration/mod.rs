@@ -22,6 +22,10 @@ pub trait Configuration {
     fn is_reporting_enabled(&self) -> bool;
     /// Default tags to be sent with every metric reporting
     fn default_tags(&self) -> Vec<String>;
+    /// if defined, will use UDS instead of UDP and will ignore UDP options
+    fn socket_path(&self) -> Option<String>;
+    /// if defined, will utilize batching for sending metrics
+    fn batching_options(&self) -> Option<dogstatsd::BatchingOptions>;
     /// Get the tag tracker configuration, and reset it to default. See [TagTrackerConfiguration]
     fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
         TagTrackerConfiguration::new()
@@ -47,5 +51,13 @@ impl Configuration for dogstatsd::Options {
 
     fn default_tags(&self) -> Vec<String> {
         vec![]
+    }
+
+    fn socket_path(&self) -> Option<String> {
+        self.socket_path.clone()
+    }
+
+    fn batching_options(&self) -> Option<dogstatsd::BatchingOptions> {
+        self.batching_options
     }
 }
