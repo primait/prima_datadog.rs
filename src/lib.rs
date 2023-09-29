@@ -14,7 +14,7 @@
 //! let configuration = PrimaConfiguration::new(
 //!     "0.0.0.0:1234", // to address
 //!     "0.0.0.0:0", // from address
-//!     "service_name", // namespace for all metrics
+//!     "namespace", // namespace for all metrics
 //! );
 //!
 //! // Initializes a Datadog instance
@@ -33,7 +33,7 @@
 //! # let configuration = PrimaConfiguration::new(
 //! #     "0.0.0.0:1234", // to address
 //! #     "0.0.0.0:0", // from address
-//! #     "service_name", // namespace for all metrics
+//! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
 //!
@@ -68,7 +68,7 @@
 //! # let configuration = PrimaConfiguration::new(
 //! #     "0.0.0.0:1234", // to address
 //! #     "0.0.0.0:0", // from address
-//! #     "service_name", // namespace for all metrics
+//! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
 //!
