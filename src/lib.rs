@@ -14,12 +14,11 @@
 //! let configuration = PrimaConfiguration::new(
 //!     "0.0.0.0:1234", // to address
 //!     "0.0.0.0:0", // from address
-//!     "service_name", // namespace for all metrics
-//!     "production".parse().unwrap() // environment
+//!     "namespace", // namespace for all metrics
 //! );
 //!
 //! // Initializes a Datadog instance
-//! Datadog::init(configuration);
+//! Datadog::init(configuration).unwrap();
 //! ```
 //!
 //! Then you can use the macros exposed at the base level of the module.
@@ -34,10 +33,10 @@
 //! # let configuration = PrimaConfiguration::new(
 //! #     "0.0.0.0:1234", // to address
 //! #     "0.0.0.0:0", // from address
-//! #     "service_name", // namespace for all metrics
-//! #     "production".parse().unwrap() // environment
+//! #     "namespace", // namespace for all metrics
 //! # );
-//! # Datadog::init(configuration);
+//! # Datadog::init(configuration).unwrap();
+//!
 //! incr!("test");
 //! # incr!("test"; "some" => "data");
 //! # decr!("test");
@@ -69,10 +68,10 @@
 //! # let configuration = PrimaConfiguration::new(
 //! #     "0.0.0.0:1234", // to address
 //! #     "0.0.0.0:0", // from address
-//! #     "service_name", // namespace for all metrics
-//! #     "production".parse().unwrap() // environment
+//! #     "namespace", // namespace for all metrics
 //! # );
-//! # Datadog::init(configuration);
+//! # Datadog::init(configuration).unwrap();
+//!
 //! enum Metric {
 //!     John,
 //!     Paul,
@@ -105,7 +104,7 @@
 //! vary significantly. See <https://docs.datadoghq.com/getting_started/tagging/> for more information.
 //!
 //! Users may configure some actions to be taken when a metric cardinality threshold is exceeded. See
-//! [tracker::TagTrackerConfiguration] for more information.
+//! [TagTrackerConfiguration] for more information.
 //!
 //! ## References
 //!
@@ -170,9 +169,7 @@ static INSTANCE: OnceCell<Datadog<dogstatsd::Client>> = OnceCell::new();
 pub struct Datadog<C: DogstatsdClient> {
     /// an instance of a dogstatsd::Client
     inner: C,
-    /// tells if metric should be reported. If false, nothing is sent to the udp socket.
-    is_reporting_enabled: bool,
-    // Tracking for high tag cardinality
+    /// Tracking for high tag cardinality
     tag_tracker: Tracker,
 }
 
@@ -196,11 +193,7 @@ impl Datadog<dogstatsd::Client> {
             );
 
             let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;
-            Ok(Self::new(
-                client,
-                configuration.is_reporting_enabled(),
-                configuration.take_tracker_config(),
-            ))
+            Ok(Self::new(client, configuration.take_tracker_config()))
         })?;
 
         if initialized {
@@ -323,40 +316,33 @@ impl Datadog<dogstatsd::Client> {
 }
 
 impl<C: DogstatsdClient> Datadog<C> {
-    fn new(client: C, is_reporting_enabled: bool, tracker_config: TagTrackerConfiguration) -> Self {
+    fn new(client: C, tracker_config: TagTrackerConfiguration) -> Self {
         Self {
             inner: client,
-            is_reporting_enabled,
             tag_tracker: tracker_config.build(),
         }
     }
 
     pub(crate) fn do_incr<S: AsRef<str>>(&self, metric: impl AsRef<str>, tags: impl TagsProvider<S>) {
-        if self.is_reporting_enabled {
-            self.inner.incr(
-                metric.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.incr(
+            metric.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_decr<S: AsRef<str>>(&self, metric: impl AsRef<str>, tags: impl TagsProvider<S>) {
-        if self.is_reporting_enabled {
-            self.inner.decr(
-                metric.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.decr(
+            metric.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_count<S: AsRef<str>>(&self, metric: impl AsRef<str>, count: i64, tags: impl TagsProvider<S>) {
-        if self.is_reporting_enabled {
-            self.inner.count(
-                metric.as_ref(),
-                count,
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.count(
+            metric.as_ref(),
+            count,
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_time<S, F, O>(&self, metric: impl AsRef<str>, tags: impl TagsProvider<S>, block: F) -> O
@@ -364,15 +350,11 @@ impl<C: DogstatsdClient> Datadog<C> {
         S: AsRef<str>,
         F: FnOnce() -> O,
     {
-        if self.is_reporting_enabled {
-            self.inner.time(
-                metric.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-                block,
-            )
-        } else {
-            block()
-        }
+        self.inner.time(
+            metric.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+            block,
+        )
     }
 
     pub(crate) async fn do_async_time<S, F, T, O>(
@@ -386,27 +368,21 @@ impl<C: DogstatsdClient> Datadog<C> {
         F: FnOnce() -> T + Send,
         T: Future<Output = O> + Send,
     {
-        if self.is_reporting_enabled {
-            self.inner
-                .async_time(
-                    metric.as_ref(),
-                    self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-                    block,
-                )
-                .await
-        } else {
-            block().await
-        }
+        self.inner
+            .async_time(
+                metric.as_ref(),
+                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+                block,
+            )
+            .await
     }
 
     pub(crate) fn do_timing<S: AsRef<str>>(&self, metric: impl AsRef<str>, ms: i64, tags: impl TagsProvider<S>) {
-        if self.is_reporting_enabled {
-            self.inner.timing(
-                metric.as_ref(),
-                ms,
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.timing(
+            metric.as_ref(),
+            ms,
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_gauge<S: AsRef<str>>(
@@ -415,13 +391,11 @@ impl<C: DogstatsdClient> Datadog<C> {
         value: impl AsRef<str>,
         tags: impl TagsProvider<S>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.gauge(
-                metric.as_ref(),
-                value.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.gauge(
+            metric.as_ref(),
+            value.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_histogram<S: AsRef<str>>(
@@ -430,13 +404,11 @@ impl<C: DogstatsdClient> Datadog<C> {
         value: impl AsRef<str>,
         tags: impl TagsProvider<S>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.histogram(
-                metric.as_ref(),
-                value.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.histogram(
+            metric.as_ref(),
+            value.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_distribution<S: AsRef<str>>(
@@ -445,13 +417,11 @@ impl<C: DogstatsdClient> Datadog<C> {
         value: impl AsRef<str>,
         tags: impl TagsProvider<S>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.distribution(
-                metric.as_ref(),
-                value.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.distribution(
+            metric.as_ref(),
+            value.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_set<S: AsRef<str>>(
@@ -460,13 +430,11 @@ impl<C: DogstatsdClient> Datadog<C> {
         value: impl AsRef<str>,
         tags: impl TagsProvider<S>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.set(
-                metric.as_ref(),
-                value.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.set(
+            metric.as_ref(),
+            value.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 
     pub(crate) fn do_service_check<S: AsRef<str>>(
@@ -476,14 +444,12 @@ impl<C: DogstatsdClient> Datadog<C> {
         tags: impl TagsProvider<S>,
         options: Option<ServiceCheckOptions>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.service_check(
-                metric.as_ref(),
-                value,
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-                options,
-            );
-        }
+        self.inner.service_check(
+            metric.as_ref(),
+            value,
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+            options,
+        );
     }
 
     pub(crate) fn do_event<S: AsRef<str>>(
@@ -492,12 +458,10 @@ impl<C: DogstatsdClient> Datadog<C> {
         text: impl AsRef<str>,
         tags: impl TagsProvider<S>,
     ) {
-        if self.is_reporting_enabled {
-            self.inner.event(
-                metric.as_ref(),
-                text.as_ref(),
-                self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
-            );
-        }
+        self.inner.event(
+            metric.as_ref(),
+            text.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
     }
 }
