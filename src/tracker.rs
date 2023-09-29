@@ -162,7 +162,6 @@ type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str], &HashMap<String, Vec<H
 ///     "0.0.0.0:1234",
 ///     "0.0.0.0:0",
 ///     "prima_datadog_benchmarks",
-///     "dev".parse().unwrap(),
 /// ).with_country(Country::It).with_tracker_configuration(tracker_config);
 /// Datadog::init(configuration).unwrap();
 /// ```

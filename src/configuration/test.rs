@@ -18,10 +18,6 @@ impl Configuration for TestConfiguration {
         "test"
     }
 
-    fn is_reporting_enabled(&self) -> bool {
-        false
-    }
-
     fn default_tags(&self) -> Vec<String> {
         vec![]
     }

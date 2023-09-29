@@ -11,7 +11,6 @@ pub struct PrimaConfiguration {
     to_addr: String,
     from_addr: String,
     namespace: String,
-    environment: Environment,
     tags: Vec<String>,
     tracker: TagTrackerConfiguration,
     socket_path: Option<String>,
@@ -19,21 +18,24 @@ pub struct PrimaConfiguration {
 }
 
 impl PrimaConfiguration {
-    pub fn new(to_addr: &str, from_addr: &str, namespace: &str, environment: Environment) -> Self {
-        let env_str = environment.to_string();
+    pub fn new(to_addr: &str, from_addr: &str, namespace: &str) -> Self {
         Self {
             to_addr: to_addr.to_string(),
             from_addr: from_addr.to_string(),
             namespace: namespace.to_string(),
-            environment,
-            tags: vec![format!("env:{}", env_str)],
+            tags: vec![],
             tracker: TagTrackerConfiguration::new(),
             socket_path: None,
             batching_options: None,
         }
     }
 
-    pub fn with_tag<T: std::fmt::Display>(mut self, key: &str, value: &T) -> Self {
+    pub fn with_environment(mut self, environment: Environment) -> Self {
+        self.tags.push(format!("env:{}", environment));
+        self
+    }
+
+    pub fn with_tag<T: Display>(mut self, key: &str, value: &T) -> Self {
         self.tags.push(format!("{}:{}", key, value));
         self
     }
@@ -71,10 +73,6 @@ impl Configuration for PrimaConfiguration {
         self.namespace.as_str()
     }
 
-    fn is_reporting_enabled(&self) -> bool {
-        self.environment != Environment::Qa
-    }
-
     fn default_tags(&self) -> Vec<String> {
         self.tags.clone()
     }
@@ -97,7 +95,6 @@ impl Configuration for PrimaConfiguration {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Environment {
     Dev,
-    Qa,
     Staging,
     Production,
 }
@@ -107,7 +104,6 @@ impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
             Environment::Dev => "dev",
-            Environment::Qa => "qa",
             Environment::Staging => "staging",
             Environment::Production => "production",
         }
@@ -120,7 +116,6 @@ impl FromStr for Environment {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "dev" => Ok(Self::Dev),
-            "qa" => Ok(Self::Qa),
             "staging" => Ok(Self::Staging),
             "production" => Ok(Self::Production),
             _ => Err(PrimaDatadogError::WrongEnvironmentDefinition),
@@ -257,7 +252,6 @@ mod tests {
     #[test]
     pub fn test_from_str() {
         assert_eq!(Some(Environment::Dev), "dev".parse().ok());
-        assert_eq!(Some(Environment::Qa), "qa".parse().ok());
         assert_eq!(Some(Environment::Staging), "staging".parse().ok());
         assert_eq!(Some(Environment::Production), "production".parse().ok());
     }
@@ -271,29 +265,32 @@ mod tests {
     #[test]
     pub fn test_tags() {
         let count = 1;
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev)
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace")
             .with_tag("key", &"value")
             .with_tag("count", &count);
 
-        assert_eq!(config.default_tags(), vec!["env:dev", "key:value", "count:1"]);
+        assert_eq!(config.default_tags(), vec!["key:value", "count:1"]);
+    }
+
+    #[test]
+    pub fn test_environment() {
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace").with_environment(Environment::Dev);
+
+        assert_eq!(config.default_tags(), vec!["env:dev"]);
     }
 
     #[test]
     pub fn test_country() {
-        let config =
-            PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev).with_country(Country::It);
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace").with_country(Country::It);
 
-        assert_eq!(config.default_tags(), vec!["env:dev", "prima:country:it"]);
+        assert_eq!(config.default_tags(), vec!["prima:country:it"]);
 
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace", Environment::Dev)
+        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace")
             .with_country(Country::It)
             .with_country(Country::Es);
 
         // Datadog tag keys are allowed to map to multiple values, and I suppose we're ok with that too (e.g. cross-country infra down the line?)
-        assert_eq!(
-            config.default_tags(),
-            vec!["env:dev", "prima:country:it", "prima:country:es"]
-        );
+        assert_eq!(config.default_tags(), vec!["prima:country:it", "prima:country:es"]);
     }
 
     #[cfg(feature = "serde")]
@@ -309,12 +306,7 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn test_environment_serde() {
-        for environment in [
-            Environment::Production,
-            Environment::Staging,
-            Environment::Qa,
-            Environment::Dev,
-        ] {
+        for environment in [Environment::Production, Environment::Staging, Environment::Dev] {
             let serialized = serde_json::to_string(&environment).unwrap();
             let deserialized: Environment = serde_json::from_str(&serialized).unwrap();
             assert_eq!(environment, deserialized);

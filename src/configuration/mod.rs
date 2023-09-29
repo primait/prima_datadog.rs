@@ -17,9 +17,6 @@ pub trait Configuration {
     fn from_addr(&self) -> &str;
     /// A namespace to prefix all metrics with, joined with a '.'.
     fn namespace(&self) -> &str;
-    /// Whether to send metrics or not.
-    /// This is useful to make the client silent in certain condition
-    fn is_reporting_enabled(&self) -> bool;
     /// Default tags to be sent with every metric reporting
     fn default_tags(&self) -> Vec<String>;
     /// if defined, will use UDS instead of UDP and will ignore UDP options
@@ -43,10 +40,6 @@ impl Configuration for dogstatsd::Options {
 
     fn namespace(&self) -> &str {
         self.namespace.as_str()
-    }
-
-    fn is_reporting_enabled(&self) -> bool {
-        true
     }
 
     fn default_tags(&self) -> Vec<String> {
