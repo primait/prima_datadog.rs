@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Socket path and batching options can now be optionally set as part of the configuration
-
 ---
+
+## [0.6.0] - 2023-10-02
+
+### Added
+
+- Socket path and batching options can now be optionally set as part of the configuration
+- `async_time` macro to collect timing with asynchronous functions.
+- `PrimaConfiguration` new function `with_environment` to optionally add an env.
+
+### Removed
+
+- **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env` parameter. 
 
 ## [0.5.0] - 2022-12-05
 
@@ -88,7 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.5]
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/primait/prima_datadog.rs/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/primait/prima_datadog.rs/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/primait/prima_datadog.rs/compare/0.3.0...0.3.1
