@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env` parameter. 
+  - Use `with_environment` function to manually set the `env:{env}` tag
+  - If no environment is set the library will use `DD_ENV` var by default if set.
 
 ## [0.5.0] - 2022-12-05
 
