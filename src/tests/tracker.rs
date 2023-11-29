@@ -102,9 +102,9 @@ pub fn check_event_sent_exactly_once() {
 #[test]
 pub fn check_algorithm_counts_unique_sets_directly() {
     let threshold = 3;
-    let set1: Vec<_> = vec!["a", "b", "c"].iter().map(|s| s.to_string()).collect();
-    let set2: Vec<_> = vec!["a", "b", "d"].iter().map(|s| s.to_string()).collect();
-    let set3: Vec<_> = vec!["a", "c", "d"].iter().map(|s| s.to_string()).collect();
+    let set1: Vec<_> = ["a", "b", "c"].iter().map(|s| s.to_string()).collect();
+    let set2: Vec<_> = ["a", "b", "d"].iter().map(|s| s.to_string()).collect();
+    let set3: Vec<_> = ["a", "c", "d"].iter().map(|s| s.to_string()).collect();
     // The above are 3 unique tag sets, so we expect an event to be emitted
     let mock = MockClient::new();
     let mock = expect_incr(mock, "test", set1.clone());
