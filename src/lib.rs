@@ -23,7 +23,7 @@
 //!
 //! Then you can use the macros exposed at the base level of the module.
 //! All macros accepts
-//! - a string value or a path to a type that implements AsRef<str> as first argument.
+//! - a string value or a path to a type that implements `AsRef<str>` as first argument.
 //! - zero or more arguments, separated by comma `,`, for the metrics that needs more data.
 //!     For example `count!` and `timing!` accepts a number while `service_check!` accepts a [ServiceStatus] and a [ServiceCheckOptions]
 //! - a list of tags (which is separated from the rest of the arguments by semicolon `;`) in the form of `"name" => "value"`
@@ -61,7 +61,8 @@
 //! event!("test", "test event"; "some" => "data");
 //! ```
 //!
-//! This is an example of a custom metric, in this case based on an enum type, but it can really be whatever you want, as long as it implements AsRef<str>
+//! This is an example of a custom metric, in this case based on an enum type, but it can really be
+//! whatever you want, as long as it implements `AsRef<str>`.
 //!
 //! ```
 //! # use prima_datadog::{*, configuration::PrimaConfiguration};
