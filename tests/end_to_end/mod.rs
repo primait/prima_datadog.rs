@@ -2,7 +2,7 @@ mod event;
 mod service_check;
 
 use once_cell::sync::OnceCell;
-use prima_datadog::{configuration::PrimaConfiguration, Datadog};
+use prima_datadog::{configuration::Config, Datadog};
 use std::net::UdpSocket;
 
 static SOCKET: OnceCell<UdpSocket> = OnceCell::new();
@@ -18,7 +18,7 @@ fn init_test_datadog() -> &'static UdpSocket {
     let socket = SOCKET.get_or_init(|| UdpSocket::bind("127.0.0.1:0").expect("couldn't open udp socket"));
     let address_to = format!("127.0.0.1:{}", socket.local_addr().unwrap().port());
 
-    let configuration = PrimaConfiguration::new(&address_to, "0.0.0.0:0", "prova_datadog");
+    let configuration = Config::new(&address_to, "0.0.0.0:0", "prova_datadog");
     let _ = Datadog::init(configuration);
     socket
 }

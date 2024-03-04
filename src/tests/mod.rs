@@ -1,4 +1,4 @@
-use crate::configuration::PrimaConfiguration;
+use crate::configuration::Config;
 
 use super::*;
 
@@ -19,9 +19,9 @@ mod tracker;
 
 #[test]
 pub fn double_initialization() {
-    let datadog = Datadog::init(PrimaConfiguration::new("10.1.2.3:8125", "127.0.0.1:9000", ""));
+    let datadog = Datadog::init(Config::new("10.1.2.3:8125", "127.0.0.1:9000", ""));
     assert!(datadog.is_ok());
-    let datadog2 = Datadog::init(PrimaConfiguration::new("10.1.2.3:8125", "127.0.0.1:9000", ""));
+    let datadog2 = Datadog::init(Config::new("10.1.2.3:8125", "127.0.0.1:9000", ""));
     assert!(datadog2.err().unwrap().is_once_cell_already_initialized());
 }
 

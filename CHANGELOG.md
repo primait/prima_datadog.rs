@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING CHANGES**:
+  - `PrimaConfiguration` is now `Config`
+  - `Config::new` now takes only 2 arguments, `to_addr` and `namespace`
+  - `from_addr` is now `0.0.0.0:0` by default, but can be customized using `.with_from_addr`
+
 ---
 
 ## [0.6.0] - 2023-10-02
@@ -19,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env` parameter. 
+- **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env` parameter.
   - Use `with_environment` function to manually set the `env:{env}` tag
   - If no environment is set the library will use `DD_ENV` var by default if set.
 
