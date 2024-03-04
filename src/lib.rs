@@ -117,7 +117,6 @@ pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
-pub use macros::*;
 pub use tracker::*;
 
 use crate::configuration::Configuration;
