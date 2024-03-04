@@ -6,8 +6,11 @@ use crate::TagTrackerConfiguration;
 use std::fmt::Display;
 use std::str::FromStr;
 
+/// By binding to 0.0.0.0:0 we're just letting the OS assign us a port, and letting anyone send us UDP packets on that port
+const DEFAULT_FROM_ADDR: &str = "0.0.0.0:0";
+
 /// The struct that represents options for the Datadog client in Prima.
-pub struct PrimaConfiguration {
+pub struct Config {
     to_addr: String,
     from_addr: String,
     namespace: String,
@@ -17,17 +20,22 @@ pub struct PrimaConfiguration {
     batching_options: Option<dogstatsd::BatchingOptions>,
 }
 
-impl PrimaConfiguration {
-    pub fn new(to_addr: &str, from_addr: &str, namespace: &str) -> Self {
+impl Config {
+    pub fn new(to_addr: &str, namespace: &str) -> Self {
         Self {
             to_addr: to_addr.to_string(),
-            from_addr: from_addr.to_string(),
+            from_addr: DEFAULT_FROM_ADDR.to_string(),
             namespace: namespace.to_string(),
             tags: vec![],
             tracker: TagTrackerConfiguration::new(),
             socket_path: None,
             batching_options: None,
         }
+    }
+
+    pub fn with_from_addr(mut self, from_addr: &str) -> Self {
+        self.from_addr = from_addr.to_string();
+        self
     }
 
     pub fn with_environment(mut self, environment: Environment) -> Self {
@@ -60,7 +68,7 @@ impl PrimaConfiguration {
     }
 }
 
-impl Configuration for PrimaConfiguration {
+impl Configuration for Config {
     fn to_addr(&self) -> &str {
         self.to_addr.as_str()
     }
@@ -265,7 +273,8 @@ mod tests {
     #[test]
     pub fn test_tags() {
         let count = 1;
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace")
+        let config = Config::new("to_addr", "namespace")
+            .with_from_addr("from_addr")
             .with_tag("key", &"value")
             .with_tag("count", &count);
 
@@ -274,18 +283,23 @@ mod tests {
 
     #[test]
     pub fn test_environment() {
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace").with_environment(Environment::Dev);
+        let config = Config::new("to_addr", "namespace")
+            .with_from_addr("from_addr")
+            .with_environment(Environment::Dev);
 
         assert_eq!(config.default_tags(), vec!["env:dev"]);
     }
 
     #[test]
     pub fn test_country() {
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace").with_country(Country::It);
+        let config = Config::new("to_addr", "namespace")
+            .with_from_addr("from_addr")
+            .with_country(Country::It);
 
         assert_eq!(config.default_tags(), vec!["prima:country:it"]);
 
-        let config = PrimaConfiguration::new("to_addr", "from_addr", "namespace")
+        let config = Config::new("to_addr", "namespace")
+            .with_from_addr("from_addr")
             .with_country(Country::It)
             .with_country(Country::Es);
 

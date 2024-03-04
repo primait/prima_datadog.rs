@@ -5,15 +5,14 @@
 //! You need to call [Datadog::init] in your main binary, and to do so you'll need as argument a type that implements the [Configuration] trait.
 //! If you never call [Datadog::init] in your binary NO metrics will be sent.
 //!
-//! Inside the [configuration] you'll find an [implementation of this trait][configuration::PrimaConfiguration] tailored for prima.it needs.
+//! Inside the [configuration] you'll find an [implementation of this trait][configuration::Config] tailored for prima.it needs.
 //!
 //! ```
-//! use prima_datadog::{*, configuration::PrimaConfiguration};
+//! use prima_datadog::{*, configuration::Config};
 //!
-//! // initializes the PrimaConfiguration struct
-//! let configuration = PrimaConfiguration::new(
+//! // initializes the Config struct
+//! let configuration = Config::new(
 //!     "0.0.0.0:1234", // to address
-//!     "0.0.0.0:0", // from address
 //!     "namespace", // namespace for all metrics
 //! );
 //!
@@ -29,10 +28,9 @@
 //! - a list of tags (which is separated from the rest of the arguments by semicolon `;`) in the form of `"name" => "value"`
 //!
 //! ```
-//! # use prima_datadog::{*, configuration::PrimaConfiguration};
-//! # let configuration = PrimaConfiguration::new(
+//! # use prima_datadog::{*, configuration::Config};
+//! # let configuration = Config::new(
 //! #     "0.0.0.0:1234", // to address
-//! #     "0.0.0.0:0", // from address
 //! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
@@ -65,10 +63,9 @@
 //! whatever you want, as long as it implements `AsRef<str>`.
 //!
 //! ```
-//! # use prima_datadog::{*, configuration::PrimaConfiguration};
-//! # let configuration = PrimaConfiguration::new(
+//! # use prima_datadog::{*, configuration::Config};
+//! # let configuration = Config::new(
 //! #     "0.0.0.0:1234", // to address
-//! #     "0.0.0.0:0", // from address
 //! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
@@ -120,7 +117,6 @@ pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
-pub use macros::*;
 pub use tracker::*;
 
 use crate::configuration::Configuration;

@@ -3,7 +3,7 @@
 mod prima;
 mod test;
 
-pub use prima::{Country, Environment, PrimaConfiguration};
+pub use prima::{Config, Country, Environment};
 pub use test::TestConfiguration;
 
 use crate::TagTrackerConfiguration;
