@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use prima_datadog::{
-    configuration::{Configuration, Country},
+    configuration::{Configuration, Country, Environment},
     Datadog, TagTrackerConfiguration,
 };
 
@@ -11,6 +11,7 @@ fn setup(_: &mut Criterion) {
         .with_custom_action(|_, _, _| {});
     let configuration = Configuration::new("0.0.0.0:1234", "prima_datadog_benchmarks")
         .with_country(Country::It)
+        .with_environment(Environment::Dev)
         .with_tracker_configuration(tracker_config);
     Datadog::init(configuration).unwrap();
 }
