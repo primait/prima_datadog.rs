@@ -115,32 +115,6 @@ impl From<Configuration> for dogstatsd::Options {
     }
 }
 
-// #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-// #[cfg(feature = "serde")]
-// impl<'de> serde::Deserialize<'de> for Country {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: serde::Deserializer<'de>,
-//     {
-//         struct CountryVisitor;
-//         impl<'de> serde::de::Visitor<'de> for CountryVisitor {
-//             type Value = Country;
-
-//             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-//                 formatter.write_str("a country tag")
-//             }
-
-//             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-//             where
-//                 E: serde::de::Error,
-//             {
-//                 Country::from_str(v).map_err(|_| E::custom("unknown country tag"))
-//             }
-//         }
-//         deserializer.deserialize_str(CountryVisitor)
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
