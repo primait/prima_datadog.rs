@@ -6,8 +6,9 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 /// By binding to 0.0.0.0:0 we're just letting the OS assign us a port, and letting anyone send us UDP packets on that port
-/// This is fine since the statsd protocol is unidirectional(only sends data) to the server
-/// We can't just bind to a different address(eg. localhost) because that would prevent us from sending data to the server
+///
+/// This is fine since the statsd protocol is unidirectional (only sends data) to the server.
+/// We can't just bind to a different address (e.g. localhost) because that would prevent us from sending data to the server
 const DEFAULT_FROM_ADDR: &str = "0.0.0.0:0";
 
 /// The struct that represents options for the Datadog client in Prima.
