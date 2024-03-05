@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implemented `From<Configuration>` for `dogstatsd::Options`
+
+### Changed
+
+- `Config` is now `Configuration`
+
+### Removed
+
+- There is no `Configuration` trait anymore
+
 ---
 
 ## [0.7.0] - 2024-03-04
@@ -110,7 +122,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.1.5]
-
 
 [Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...HEAD
 [0.7.0]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...0.7.0
