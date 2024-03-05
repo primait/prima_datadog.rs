@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- There is no `Configuration` trait anymore
+- The `Configuration` trait
 
 ---
 
