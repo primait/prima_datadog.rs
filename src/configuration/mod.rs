@@ -82,10 +82,6 @@ impl Configuration {
         self.tags.clone()
     }
 
-    pub fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
-        std::mem::replace(&mut self.tracker, TagTrackerConfiguration::new())
-    }
-
     pub fn socket_path(&self) -> Option<String> {
         self.socket_path.clone()
     }
@@ -93,17 +89,21 @@ impl Configuration {
     pub fn batching_options(&self) -> Option<dogstatsd::BatchingOptions> {
         self.batching_options
     }
+
+    pub fn take_tracker_config(&mut self) -> TagTrackerConfiguration {
+        std::mem::replace(&mut self.tracker, TagTrackerConfiguration::new())
+    }
 }
 
-impl Into<dogstatsd::Options> for Configuration {
-    fn into(self) -> dogstatsd::Options {
+impl From<Configuration> for dogstatsd::Options {
+    fn from(value: Configuration) -> Self {
         dogstatsd::Options::new(
-            self.from_addr(),
-            self.to_addr(),
-            self.namespace(),
-            self.default_tags(),
-            self.socket_path(),
-            self.batching_options(),
+            value.from_addr(),
+            value.to_addr(),
+            value.namespace(),
+            value.default_tags(),
+            value.socket_path(),
+            value.batching_options(),
         )
     }
 }

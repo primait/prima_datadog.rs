@@ -180,17 +180,11 @@ impl Datadog<dogstatsd::Client> {
         let _ = INSTANCE.get_or_try_init::<_, Error>(|| {
             initialized = true;
 
-            let dogstatsd_client_options: dogstatsd::Options = dogstatsd::Options::new(
-                configuration.from_addr(),
-                configuration.to_addr(),
-                configuration.namespace(),
-                configuration.default_tags(),
-                configuration.socket_path(),
-                configuration.batching_options(),
-            );
+            let tracker_config = configuration.take_tracker_config();
+            let dogstatsd_client_options: dogstatsd::Options = configuration.into();
 
             let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;
-            Ok(Self::new(client, configuration.take_tracker_config()))
+            Ok(Self::new(client, tracker_config))
         })?;
 
         if initialized {
