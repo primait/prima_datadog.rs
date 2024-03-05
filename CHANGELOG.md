@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The `Configuration` trait
+- `Country` and `Environment` serialization
 
 ---
 
@@ -126,7 +127,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [0.1.5]
-
 
 [Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.7.1...HEAD
 [0.7.1]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...0.7.1
