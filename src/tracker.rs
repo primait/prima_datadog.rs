@@ -152,13 +152,13 @@ type ThresholdCustomAction = Box<dyn FnMut(&str, &[&str], &HashMap<String, Vec<H
 /// Example usage:
 /// ```rust
 /// use prima_datadog::{
-///     configuration::{Country, Config},
+///     configuration::{Country, Configuration},
 ///     Datadog, TagTrackerConfiguration,
 /// };
 /// let tracker_config = TagTrackerConfiguration::new()
 ///     .with_threshold(21)
 ///     .with_custom_action(|_, _, _| {});
-/// let configuration = Config::new(
+/// let configuration = Configuration::new(
 ///     "0.0.0.0:1234",
 ///     "prima_datadog_benchmarks",
 /// ).with_country(Country::It).with_tracker_configuration(tracker_config);
