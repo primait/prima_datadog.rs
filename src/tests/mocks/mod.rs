@@ -38,12 +38,12 @@ mock! {
         fn set(&self, metric: &str, val: &str, tags: Vec<String>);
 
         /// Report the status of a service
-        fn service_check(
+        fn service_check<'a>(
             &self,
             metric: &str,
             val: ServiceStatus,
             tags: Vec<String>,
-            options: Option<ServiceCheckOptions>,
+            options: Option<ServiceCheckOptions<'a>>,
         );
 
         /// Send a custom event as a title and a body
@@ -197,28 +197,24 @@ pub fn service_check_mock(
     metric: &'static str,
     value: ServiceStatus,
     tags: &'static [&str],
-    options: Option<ServiceCheckOptions>,
+    options: Option<ServiceCheckOptions<'static>>,
 ) -> MockClient {
     let mut client_mock = MockClient::new();
     client_mock
         .expect_service_check()
         .once()
-        .with(
-            eq(metric),
-            function(move |called_value: &ServiceStatus| {
-                matches!(
-                    (called_value, value),
+        .withf(move |called_metric, called_status, called_tags, called_options| {
+            called_metric == metric
+                && matches!(
+                    (called_status, value),
                     (ServiceStatus::OK, ServiceStatus::OK)
                         | (ServiceStatus::Critical, ServiceStatus::Critical)
                         | (ServiceStatus::Unknown, ServiceStatus::Unknown)
                         | (ServiceStatus::Warning, ServiceStatus::Warning)
                 )
-            }),
-            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
-            function(move |called_options: &Option<ServiceCheckOptions>| {
-                matches!((called_options, options), (Some(_), Some(_)) | (None, None))
-            }),
-        )
+                && called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+                && matches!((called_options, options), (Some(_), Some(_)) | (None, None))
+        })
         .return_const(());
 
     client_mock
