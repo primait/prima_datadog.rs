@@ -5,15 +5,14 @@
 //! You need to call [Datadog::init] in your main binary, and to do so you'll need as argument a type that implements the [Configuration] trait.
 //! If you never call [Datadog::init] in your binary NO metrics will be sent.
 //!
-//! Inside the [configuration] you'll find an [implementation of this trait][configuration::PrimaConfiguration] tailored for prima.it needs.
+//! Inside the [configuration] you'll find an [implementation of this trait][configuration::Configuration] tailored for prima.it needs.
 //!
 //! ```
-//! use prima_datadog::{*, configuration::PrimaConfiguration};
+//! use prima_datadog::{*, configuration::Configuration};
 //!
-//! // initializes the PrimaConfiguration struct
-//! let configuration = PrimaConfiguration::new(
+//! // initializes the Configuration struct
+//! let configuration = Configuration::new(
 //!     "0.0.0.0:1234", // to address
-//!     "0.0.0.0:0", // from address
 //!     "namespace", // namespace for all metrics
 //! );
 //!
@@ -29,10 +28,9 @@
 //! - a list of tags (which is separated from the rest of the arguments by semicolon `;`) in the form of `"name" => "value"`
 //!
 //! ```
-//! # use prima_datadog::{*, configuration::PrimaConfiguration};
-//! # let configuration = PrimaConfiguration::new(
+//! # use prima_datadog::{*, configuration::Configuration};
+//! # let configuration = Configuration::new(
 //! #     "0.0.0.0:1234", // to address
-//! #     "0.0.0.0:0", // from address
 //! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
@@ -65,10 +63,9 @@
 //! whatever you want, as long as it implements `AsRef<str>`.
 //!
 //! ```
-//! # use prima_datadog::{*, configuration::PrimaConfiguration};
-//! # let configuration = PrimaConfiguration::new(
+//! # use prima_datadog::{*, configuration::Configuration};
+//! # let configuration = Configuration::new(
 //! #     "0.0.0.0:1234", // to address
-//! #     "0.0.0.0:0", // from address
 //! #     "namespace", // namespace for all metrics
 //! # );
 //! # Datadog::init(configuration).unwrap();
@@ -116,13 +113,13 @@
 
 use std::future::Future;
 
+use configuration::Configuration;
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
 pub use tracker::*;
 
-use crate::configuration::Configuration;
 use crate::error::Error;
 
 mod client;
@@ -176,24 +173,18 @@ pub struct Datadog<C: DogstatsdClient> {
 impl Datadog<dogstatsd::Client> {
     /// Initializes a Datadog instance with a struct that implements the [Configuration] trait.
     /// Make sure that you run it only once otherwise you will get an error.
-    pub fn init(mut configuration: impl Configuration) -> Result<(), Error> {
+    pub fn init(mut configuration: Configuration) -> Result<(), Error> {
         let mut initialized: bool = false;
 
         // the closure is guaranteed to execute only once
         let _ = INSTANCE.get_or_try_init::<_, Error>(|| {
             initialized = true;
 
-            let dogstatsd_client_options: dogstatsd::Options = dogstatsd::Options::new(
-                configuration.from_addr(),
-                configuration.to_addr(),
-                configuration.namespace(),
-                configuration.default_tags(),
-                configuration.socket_path(),
-                configuration.batching_options(),
-            );
+            let tracker_config = configuration.take_tracker_config();
+            let dogstatsd_client_options: dogstatsd::Options = configuration.into();
 
             let client: dogstatsd::Client = dogstatsd::Client::new(dogstatsd_client_options)?;
-            Ok(Self::new(client, configuration.take_tracker_config()))
+            Ok(Self::new(client, tracker_config))
         })?;
 
         if initialized {
