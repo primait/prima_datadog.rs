@@ -32,7 +32,7 @@ impl Configuration {
             to_addr: to_addr.to_string(),
             from_addr: DEFAULT_FROM_ADDR.to_string(),
             namespace: namespace.to_string(),
-            tags: vec![],
+            tags: get_env_tags(),
             tracker: TagTrackerConfiguration::new(),
             socket_path: None,
             batching_options: None,
@@ -113,6 +113,23 @@ impl From<Configuration> for dogstatsd::Options {
             value.batching_options(),
         )
     }
+}
+
+fn get_env_tags() -> Vec<String> {
+    let mut tags = vec![];
+    if let Ok(part_of) = std::env::var("KUBE_APP_PART_OF") {
+        tags.push(format!("kube_app_part_of:{}", part_of));
+    }
+    if let Ok(managed_by) = std::env::var("KUBE_APP_MANAGED_BY") {
+        tags.push(format!("kube_app_managed_by:{}", managed_by));
+    }
+    if let Ok(version) = std::env::var("KUBE_APP_VERSION") {
+        tags.push(format!("kube_app_version:{}", version));
+    }
+    if let Ok(instance) = std::env::var("KUBE_APP_INSTANCE") {
+        tags.push(format!("kube_app_instance:{}", instance));
+    }
+    tags
 }
 
 #[cfg(test)]
