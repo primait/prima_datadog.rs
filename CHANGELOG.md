@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.2] - 2024-05-03
+
+### Added
+
+- Default tag set has new values based on the environment variables:
+  * KUBE_APP_PART_OF
+  * KUBE_APP_MANAGED_BY
+  * KUBE_APP_VERSION
+  * KUBE_APP_INSTANCE
+
+---
+
+
 ## [0.7.1] - 2024-03-05
 
 ### Added
@@ -128,7 +141,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.5]
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.7.1...HEAD
+
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.7.2...HEAD
+[0.7.2]: https://github.com/primait/prima_datadog.rs/compare/0.7.1...0.7.2
 [0.7.1]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...0.7.1
 [0.7.0]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...0.7.0
 [0.6.0]: https://github.com/primait/prima_datadog.rs/compare/0.5.0...0.6.0
