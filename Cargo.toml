@@ -3,7 +3,7 @@ description = "An opinionated library to share code and approach to Datadog logg
 edition = "2018"
 license = "MIT"
 name = "prima_datadog"
-version = "0.7.1"
+version = "0.7.2"
 
 [features]
 default = []
