@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
-- *Breaking*: `with_country` will now add the `prima_country` tag instead of `prima:country`
+- **Breaking**: `with_country` will now add the `prima_country` tag instead of `prima:country`
 
 ---
 
