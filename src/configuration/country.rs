@@ -82,7 +82,7 @@ mod tests {
             .with_from_addr("from_addr")
             .with_country(Country::It);
 
-        assert_eq!(config.default_tags(), vec!["prima:country:it"]);
+        assert_eq!(config.default_tags(), vec!["prima_country:it"]);
 
         let config = Configuration::new("to_addr", "namespace")
             .with_from_addr("from_addr")
@@ -90,6 +90,6 @@ mod tests {
             .with_country(Country::Es);
 
         // Datadog tag keys are allowed to map to multiple values, and I suppose we're ok with that too (e.g. cross-country infra down the line?)
-        assert_eq!(config.default_tags(), vec!["prima:country:it", "prima:country:es"]);
+        assert_eq!(config.default_tags(), vec!["prima_country:it", "prima_country:es"]);
     }
 }

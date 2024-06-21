@@ -55,7 +55,7 @@ impl Configuration {
     }
 
     pub fn with_country(self, country: Country) -> Self {
-        self.with_tag("prima:country", &country)
+        self.with_tag("prima_country", &country)
     }
 
     pub fn with_tracker_configuration(mut self, tracker: TagTrackerConfiguration) -> Self {
