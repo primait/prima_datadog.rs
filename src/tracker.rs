@@ -230,6 +230,7 @@ impl TagTrackerConfiguration {
     /// - [a, b, c]
     /// - [a, b, d]
     /// - [a, c, d]
+    ///
     /// is counted as 3 "custom metrics", as there are 3 unique tag sets here.
     ///
     /// See <https://docs.datadoghq.com/developers/metrics/custom_metrics/> for
