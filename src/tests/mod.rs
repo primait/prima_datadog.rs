@@ -7,6 +7,7 @@ mod count;
 mod decr;
 mod distribution;
 mod event;
+mod event_with_options;
 mod gauge;
 mod histogram;
 mod incr;

@@ -114,6 +114,7 @@
 use std::future::Future;
 
 use configuration::Configuration;
+use dogstatsd::EventOptions;
 pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
@@ -295,6 +296,18 @@ impl Datadog<dogstatsd::Client> {
         }
     }
 
+    /// Send a custom event as a title, a body and some options
+    pub fn event_with_options<S: AsRef<str>>(
+        metric: impl AsRef<str>,
+        text: impl AsRef<str>,
+        tags: impl TagsProvider<S>,
+        options: Option<EventOptions>,
+    ) {
+        if let Some(instance) = INSTANCE.get() {
+            instance.do_event_with_options(metric.as_ref(), text.as_ref(), tags, options);
+        }
+    }
+
     /// Acquire a timing guard.
     /// When this guard is dropped, it will emit a timing metric for the duration it
     /// existed. The metric name is metric, and the tags are tags.
@@ -453,6 +466,21 @@ impl<C: DogstatsdClient> Datadog<C> {
             metric.as_ref(),
             text.as_ref(),
             self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
+    }
+
+    pub(crate) fn do_event_with_options<S: AsRef<str>>(
+        &self,
+        metric: impl AsRef<str>,
+        text: impl AsRef<str>,
+        tags: impl TagsProvider<S>,
+        options: Option<EventOptions>,
+    ) {
+        self.inner.event_with_options(
+            metric.as_ref(),
+            text.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+            options,
         );
     }
 }
