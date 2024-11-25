@@ -18,13 +18,13 @@ macro_rules! event_with_options {
         $crate::Datadog::event_with_options($stat.as_ref(), $text, &[$(::core::concat!($key, ":", $value)), *], None);
     };
     ($stat:path, $text:expr, $options:expr; $( $key:literal => $value:literal ), *) => {
-        $crate::Datadog::event_with_options($stat.as_ref(), $text, &[$(::core::concat!($key, ":", $value)), *], Some(options));
+        $crate::Datadog::event_with_options($stat.as_ref(), $text, &[$(::core::concat!($key, ":", $value)), *], Some($options));
     };
     ($stat:expr, $text:expr; $( $key:literal => $value:literal ), *) => {
         $crate::Datadog::event_with_options($stat, $text, &[$(::core::concat!($key, ":", $value)), *], None);
     };
     ($stat:expr, $text:expr, $options:expr; $( $key:literal => $value:literal ), *) => {
-        $crate::Datadog::event_with_options($stat, $text, &[$(::core::concat!($key, ":", $value)), *], Some(options));
+        $crate::Datadog::event_with_options($stat, $text, &[$(::core::concat!($key, ":", $value)), *], Some($options));
     };
     ($stat:path, $text:expr; $( $key:expr => $value:expr ), *) => {
         $crate::Datadog::event_with_options($stat.as_ref(), $text, &[$(::std::format!("{}:{}", $key, $value).as_str()), *], None);
