@@ -250,12 +250,14 @@ pub fn event_with_options_mock(
     client_mock
         .expect_event_with_options()
         .once()
-        .withf(move |called_metric, called_text, called_tags, called_options| {
-            called_metric == metric
-                && called_text == text
-                && called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
-                && matches!((called_options, options), (Some(_), Some(_)) | (None, None))
-        })
+        .with(
+            eq(metric),
+            eq(text),
+            function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
+            function(move |called_options: &Option<EventOptions<'static>>| {
+                matches!((called_options, options), (Some(_), Some(_)) | (None, None))
+            }),
+        )
         .return_const(());
 
     client_mock
