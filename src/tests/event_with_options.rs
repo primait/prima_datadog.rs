@@ -74,10 +74,18 @@ pub fn test_macro() {
     let tag = String::from("tag");
     // no tags
     event_with_options!("test", "test_value");
+    // no tags with options
+    event_with_options!("test", "test_value", EventOptions::new());
     // just literal tags
     event_with_options!("test", "test_value"; "literal" => 1);
+    // just literal tags with options
+    event_with_options!("test", "test_value", EventOptions::new(); "literal" => 1);
     // just expression tags
     event_with_options!("test", "test_value"; "expression" => tag);
+    // just expression tags with options
+    event_with_options!("test", "test_value", EventOptions::new(); "expression" => tag);
     // mixed tags
     event_with_options!("test", "test_value"; "literal" => 1, "expression" => tag);
+    // mixed tags with options
+    event_with_options!("test", "test_value", EventOptions::new(); "literal" => 1, "expression" => tag);
 }

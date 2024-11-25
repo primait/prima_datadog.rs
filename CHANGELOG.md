@@ -11,9 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.0] - 2024-11-25
 
+### Added
+
+- New `event_with_options!` macro, [see the original repo](https://github.com/mcasper/dogstatsd-rs) for more details
+
 ### Changed
 
 - Bump `dogstatsd` to 0.12
+- Bumped MSRV to 1.74
 
 ---
 

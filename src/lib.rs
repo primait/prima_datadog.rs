@@ -57,6 +57,8 @@
 //! service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
 //! # event!("test", "test event");
 //! event!("test", "test event"; "some" => "data");
+//! # event_with_options!("test", "test event", EventOptions::new());
+//! event_with_options!("test", "test event", EventOptions::new(); "some" => "data");
 //! ```
 //!
 //! This is an example of a custom metric, in this case based on an enum type, but it can really be
