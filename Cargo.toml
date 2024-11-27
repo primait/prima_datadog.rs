@@ -12,7 +12,7 @@ serde = ["dep:serde"]
 
 [dependencies]
 async-trait = "0.1"
-dogstatsd = {version = "=0.12.0", default-features = false}
+dogstatsd = {version = "=0.12.1", default-features = false}
 once_cell = {version = "1.9", default-features = false, features = ["std"]}
 thiserror = {version = "1.0", default-features = false}
 

@@ -49,7 +49,7 @@ pub fn event_with_options_with_type_and_tags() {
 }
 
 #[test]
-pub fn event_with_options_with_options() {
+pub fn event_with_options_and_tags() {
     let options = Some(
         EventOptions::new()
             .with_alert_type(EventAlertType::Info)
