@@ -57,7 +57,6 @@
 //! service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
 //! # event!("test", "test event");
 //! event!("test", "test event"; "some" => "data");
-//! # event!("test", "test event", None);
 //! # event!("test", "test event", EventOptions::new());
 //! # event!("test", "test event", EventOptions::new(); "some" => "data");
 //! ```
