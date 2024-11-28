@@ -48,6 +48,9 @@ mock! {
 
         /// Send a custom event as a title and a body
         fn event(&self, title: &str, text: &str, tags: Vec<String>);
+
+        /// Send a custom event as a title, a body and some options
+        fn event_with_options<'a>(&self, title: &str, text: &str, tags: Vec<String>, options: Option<EventOptions<'a>>);
     }
 }
 
@@ -231,6 +234,28 @@ pub fn event_mock(metric: &'static str, text: &'static str, tags: &'static [&str
             eq(text),
             function(move |called_tags: &Vec<String>| called_tags.iter().all(|tag| tags.contains(&tag.as_str()))),
         )
+        .return_const(());
+
+    client_mock
+}
+
+#[allow(dead_code)]
+pub fn event_with_options_mock(
+    metric: &'static str,
+    text: &'static str,
+    tags: &'static [&str],
+    options: Option<EventOptions<'static>>,
+) -> MockClient {
+    let mut client_mock = MockClient::new();
+    client_mock
+        .expect_event_with_options()
+        .once()
+        .withf(move |called_title, called_text, called_tags, called_options| {
+            called_title == metric
+                && called_text == text
+                && called_tags.iter().all(|tag| tags.contains(&tag.as_str()))
+                && matches!((called_options, options), (Some(_), Some(_)) | (None, None))
+        })
         .return_const(());
 
     client_mock

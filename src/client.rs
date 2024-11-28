@@ -1,6 +1,7 @@
 use std::future::Future;
 
 use async_trait::async_trait;
+use dogstatsd::EventOptions;
 
 use crate::{ServiceCheckOptions, ServiceStatus, TagsProvider};
 
@@ -73,6 +74,11 @@ pub trait DogstatsdClient {
 
     /// Send a custom event as a title and a body
     fn event<S>(&self, title: &str, text: &str, tags: impl TagsProvider<S>)
+    where
+        S: AsRef<str>;
+
+    /// Send a custom event as a title and a body
+    fn event_with_options<S>(&self, title: &str, text: &str, tags: impl TagsProvider<S>, options: Option<EventOptions>)
     where
         S: AsRef<str>;
 }
@@ -171,5 +177,12 @@ impl DogstatsdClient for dogstatsd::Client {
         S: AsRef<str>,
     {
         let _ = self.event(title, text, tags.as_ref());
+    }
+
+    fn event_with_options<S>(&self, title: &str, text: &str, tags: impl TagsProvider<S>, options: Option<EventOptions>)
+    where
+        S: AsRef<str>,
+    {
+        let _ = self.event_with_options(title, text, tags.as_ref(), options);
     }
 }

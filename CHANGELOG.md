@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] - 2024-11-25
+
+
+### Changed
+
+- Bump `dogstatsd` to 0.12
+- Bumped MSRV to 1.74
+- `event!` macro can now accept `EventOptions` as last argument before tags, [see the original repo](https://github.com/mcasper/dogstatsd-rs) for more details
+
+---
+
 ## [0.8.0] - 2024-06-21
 
 ## Changed
@@ -151,7 +162,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.8.0...HEAD
+
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.9.0...HEAD
+[0.9.0]: https://github.com/primait/prima_datadog.rs/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/primait/prima_datadog.rs/compare/0.7.2...0.8.0
 [0.7.2]: https://github.com/primait/prima_datadog.rs/compare/0.7.1...0.7.2
 [0.7.1]: https://github.com/primait/prima_datadog.rs/compare/0.7.0...0.7.1

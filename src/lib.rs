@@ -57,6 +57,8 @@
 //! service_check!("test", ServiceStatus::OK, ServiceCheckOptions::default());
 //! # event!("test", "test event");
 //! event!("test", "test event"; "some" => "data");
+//! # event!("test", "test event", EventOptions::new());
+//! # event!("test", "test event", EventOptions::new(); "some" => "data");
 //! ```
 //!
 //! This is an example of a custom metric, in this case based on an enum type, but it can really be
@@ -114,7 +116,7 @@
 use std::future::Future;
 
 use configuration::Configuration;
-pub use dogstatsd::{ServiceCheckOptions, ServiceStatus};
+pub use dogstatsd::{EventOptions, ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
@@ -295,6 +297,18 @@ impl Datadog<dogstatsd::Client> {
         }
     }
 
+    /// Send a custom event as a title, a body and some options
+    pub fn event_with_options<S: AsRef<str>>(
+        metric: impl AsRef<str>,
+        text: impl AsRef<str>,
+        tags: impl TagsProvider<S>,
+        options: Option<EventOptions>,
+    ) {
+        if let Some(instance) = INSTANCE.get() {
+            instance.do_event_with_options(metric.as_ref(), text.as_ref(), tags, options);
+        }
+    }
+
     /// Acquire a timing guard.
     /// When this guard is dropped, it will emit a timing metric for the duration it
     /// existed. The metric name is metric, and the tags are tags.
@@ -453,6 +467,21 @@ impl<C: DogstatsdClient> Datadog<C> {
             metric.as_ref(),
             text.as_ref(),
             self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+        );
+    }
+
+    pub(crate) fn do_event_with_options<S: AsRef<str>>(
+        &self,
+        metric: impl AsRef<str>,
+        text: impl AsRef<str>,
+        tags: impl TagsProvider<S>,
+        options: Option<EventOptions>,
+    ) {
+        self.inner.event_with_options(
+            metric.as_ref(),
+            text.as_ref(),
+            self.tag_tracker.track(&self.inner, metric.as_ref(), tags),
+            options,
         );
     }
 }

@@ -18,6 +18,7 @@ pub(super) trait MockDogstatsdClient {
     fn set(&self, metric: &str, val: &str, tags: Vec<String>);
     fn service_check(&self, metric: &str, val: ServiceStatus, tags: Vec<String>, options: Option<ServiceCheckOptions>);
     fn event(&self, title: &str, text: &str, tags: Vec<String>);
+    fn event_with_options(&self, title: &str, text: &str, tags: Vec<String>, options: Option<EventOptions>);
 }
 
 #[async_trait]
@@ -141,6 +142,19 @@ impl<C: MockDogstatsdClient + Sync> DogstatsdClient for C {
             title,
             text,
             tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
+        )
+    }
+
+    fn event_with_options<S>(&self, title: &str, text: &str, tags: impl TagsProvider<S>, options: Option<EventOptions>)
+    where
+        S: AsRef<str>,
+    {
+        MockDogstatsdClient::event_with_options(
+            self,
+            title,
+            text,
+            tags.as_ref().iter().map(|s| s.as_ref().to_string()).collect(),
+            options,
         )
     }
 }
