@@ -2,7 +2,7 @@ use dogstatsd::EventAlertType;
 use dogstatsd::EventOptions;
 use dogstatsd::EventPriority;
 
-use crate::event_with_options;
+use crate::event;
 use crate::tests::mocks;
 use crate::tests::TestEvent;
 use crate::Datadog;
@@ -72,20 +72,12 @@ pub fn event_with_options_and_tags() {
 #[test]
 pub fn test_macro() {
     let tag = String::from("tag");
-    // no tags
-    event_with_options!("test", "test_value");
     // no tags with options
-    event_with_options!("test", "test_value", EventOptions::new());
-    // just literal tags
-    event_with_options!("test", "test_value"; "literal" => 1);
+    event!("test", "test_value", EventOptions::new());
     // just literal tags with options
-    event_with_options!("test", "test_value", EventOptions::new(); "literal" => 1);
-    // just expression tags
-    event_with_options!("test", "test_value"; "expression" => tag);
+    event!("test", "test_value", EventOptions::new(); "literal" => 1);
     // just expression tags with options
-    event_with_options!("test", "test_value", EventOptions::new(); "expression" => tag);
-    // mixed tags
-    event_with_options!("test", "test_value"; "literal" => 1, "expression" => tag);
+    event!("test", "test_value", EventOptions::new(); "expression" => tag);
     // mixed tags with options
-    event_with_options!("test", "test_value", EventOptions::new(); "literal" => 1, "expression" => tag);
+    event!("test", "test_value", EventOptions::new(); "literal" => 1, "expression" => tag);
 }
