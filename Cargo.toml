@@ -14,7 +14,7 @@ serde = ["dep:serde"]
 async-trait = "0.1"
 dogstatsd = {version = "=0.12.1", default-features = false}
 once_cell = {version = "1.9", default-features = false, features = ["std"]}
-thiserror = {version = "1.0", default-features = false}
+thiserror = {version = "2.0", default-features = false}
 
 # Optional
 serde = {version = "1", optional = true}
