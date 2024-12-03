@@ -116,7 +116,7 @@
 use std::future::Future;
 
 use configuration::Configuration;
-pub use dogstatsd::{EventAlertType, EventOptions, ServiceCheckOptions, ServiceStatus};
+pub use dogstatsd::{EventAlertType, EventOptions, EventPriority, ServiceCheckOptions, ServiceStatus};
 use once_cell::sync::OnceCell;
 
 pub use client::DogstatsdClient;
