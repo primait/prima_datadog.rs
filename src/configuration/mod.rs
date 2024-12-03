@@ -6,6 +6,8 @@ mod env;
 pub use country::Country;
 pub use env::Environment;
 
+pub use dogstatsd::BatchingOptions;
+
 use crate::TagTrackerConfiguration;
 use std::fmt::Display;
 
@@ -23,7 +25,7 @@ pub struct Configuration {
     tags: Vec<String>,
     tracker: TagTrackerConfiguration,
     socket_path: Option<String>,
-    batching_options: Option<dogstatsd::BatchingOptions>,
+    batching_options: Option<BatchingOptions>,
 }
 
 impl Configuration {
@@ -68,7 +70,7 @@ impl Configuration {
         self
     }
 
-    pub fn with_batching_options(mut self, batching_options: dogstatsd::BatchingOptions) -> Self {
+    pub fn with_batching_options(mut self, batching_options: BatchingOptions) -> Self {
         self.batching_options = Some(batching_options);
         self
     }
@@ -93,7 +95,7 @@ impl Configuration {
         self.socket_path.clone()
     }
 
-    pub fn batching_options(&self) -> Option<dogstatsd::BatchingOptions> {
+    pub fn batching_options(&self) -> Option<BatchingOptions> {
         self.batching_options
     }
 
