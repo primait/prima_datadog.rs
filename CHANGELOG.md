@@ -3,20 +3,31 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ---
 
-## [0.9.0] - 2024-11-25
+## [0.9.1] - 2024-12-03
 
+### Added
+
+- Export `EventAlertType` and `BatchingOptions` (under
+  `configuration::BatchingOptions`) from `dogstatsd`
+
+---
+
+## [0.9.0] - 2024-11-25
 
 ### Changed
 
 - Bump `dogstatsd` to 0.12
 - Bumped MSRV to 1.74
-- `event!` macro can now accept `EventOptions` as last argument before tags, [see the original repo](https://github.com/mcasper/dogstatsd-rs) for more details
+- `event!` macro can now accept `EventOptions` as last argument before tags,
+  [see the original repo](https://github.com/mcasper/dogstatsd-rs) for more
+  details
 
 ---
 
@@ -24,7 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
-- **Breaking**: `with_country` will now add the `prima_country` tag instead of `prima:country`
+- **Breaking**: `with_country` will now add the `prima_country` tag instead of
+  `prima:country`
 
 ---
 
@@ -33,13 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Default tag set has new values based on the environment variables:
-  * KUBE_APP_PART_OF
-  * KUBE_APP_MANAGED_BY
-  * KUBE_APP_VERSION
-  * KUBE_APP_INSTANCE
+  - KUBE_APP_PART_OF
+  - KUBE_APP_MANAGED_BY
+  - KUBE_APP_VERSION
+  - KUBE_APP_INSTANCE
 
 ---
-
 
 ## [0.7.1] - 2024-03-05
 
@@ -65,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING CHANGES**:
   - `PrimaConfiguration` is now `Config`
   - `Config::new` now takes only 2 arguments, `to_addr` and `namespace`
-  - `from_addr` is now `0.0.0.0:0` by default, but can be customized using `.with_from_addr`
+  - `from_addr` is now `0.0.0.0:0` by default, but can be customized using
+    `.with_from_addr`
 
 ---
 
@@ -73,15 +85,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Socket path and batching options can now be optionally set as part of the configuration
+- Socket path and batching options can now be optionally set as part of the
+  configuration
 - `async_time` macro to collect timing with asynchronous functions.
 - `PrimaConfiguration` new function `with_environment` to optionally add an env.
 
 ### Removed
 
-- **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env` parameter.
+- **BREAKING CHANGE**: `PrimaConfiguration::new` function no longer takes `env`
+  parameter.
   - Use `with_environment` function to manually set the `env:{env}` tag
-  - If no environment is set the library will use `DD_ENV` var by default if set.
+  - If no environment is set the library will use `DD_ENV` var by default if
+    set.
 
 ## [0.5.0] - 2022-12-05
 
@@ -92,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Fixed 0.4.0 backwards compatibility, relating to errors in some macro definitions
+- Fixed 0.4.0 backwards compatibility, relating to errors in some macro
+  definitions
 - Fixed various documentation errors
 
 ---
@@ -101,7 +117,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added support for custom metric tracking via tag cardinality. See documentation in library header and `TagTrackerConfiguration`
+- Added support for custom metric tracking via tag cardinality. See
+  documentation in library header and `TagTrackerConfiguration`
 - No longer allocate when it can be avoided
 
 ---
@@ -122,7 +139,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Datadog::new` reintroduced `is_reporting_enabled`.
 - `Datadog::new` is now a private function for tests.
-- (Behaviour): The client, if not initialized, don't send metrics and don't panic.
+- (Behaviour): The client, if not initialized, don't send metrics and don't
+  panic.
 
 ### Removed
 
@@ -160,10 +178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.5]
 
-
-
-
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.9.0...HEAD
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.9.1...HEAD
+[0.9.1]: https://github.com/primait/prima_datadog.rs/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/primait/prima_datadog.rs/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/primait/prima_datadog.rs/compare/0.7.2...0.8.0
 [0.7.2]: https://github.com/primait/prima_datadog.rs/compare/0.7.1...0.7.2
