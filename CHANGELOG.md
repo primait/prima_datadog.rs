@@ -10,6 +10,14 @@ and this project adheres to
 
 ---
 
+## [0.9.2] - 2025-01-06
+
+### Updated
+
+- Bump `thiserror` to 2.0
+
+---
+
 ## [0.9.1] - 2024-12-03
 
 ### Added
@@ -178,7 +186,9 @@ and this project adheres to
 
 ## [0.1.5]
 
-[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.9.1...HEAD
+
+[Unreleased]: https://github.com/primait/prima_datadog.rs/compare/0.9.2...HEAD
+[0.9.2]: https://github.com/primait/prima_datadog.rs/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/primait/prima_datadog.rs/compare/0.9.0...0.9.1
 [0.9.0]: https://github.com/primait/prima_datadog.rs/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/primait/prima_datadog.rs/compare/0.7.2...0.8.0
