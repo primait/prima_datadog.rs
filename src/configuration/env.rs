@@ -49,7 +49,7 @@ impl<'de> serde::Deserialize<'de> for Environment {
         D: serde::Deserializer<'de>,
     {
         struct EnvironmentVisitor;
-        impl<'de> serde::de::Visitor<'de> for EnvironmentVisitor {
+        impl serde::de::Visitor<'_> for EnvironmentVisitor {
             type Value = Environment;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
