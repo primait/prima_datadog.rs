@@ -52,7 +52,7 @@ impl<'de> serde::Deserialize<'de> for Country {
         D: serde::Deserializer<'de>,
     {
         struct CountryVisitor;
-        impl<'de> serde::de::Visitor<'de> for CountryVisitor {
+        impl serde::de::Visitor<'_> for CountryVisitor {
             type Value = Country;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
