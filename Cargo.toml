@@ -22,7 +22,7 @@ serde = {version = "1", optional = true}
 [dev-dependencies]
 criterion = "0.5"
 mockall = {version = "0.13", default-features = false}
-rand = "0.8.5"
+rand = "0.9.1"
 serial_test = {version = "3.0.0", default-features = false}
 
 [[bench]]
