@@ -5,13 +5,13 @@
 /// # use prima_datadog::compare;
 /// # use std::thread::sleep;
 /// # use std::time::Duration;
-/// # let mut rng = thread_rng();
+/// # let mut rng = rand::rng();
 /// // This could also be a network request to an experiment management service, or anything you want
-/// let path = rng.gen_range(0..2);
+/// let path = rng.random_range(0..2);
 /// compare!("test", path, || {
-///     sleep(Duration::from_millis(rng.gen_range(5..10)));
+///     sleep(Duration::from_millis(rng.random_range(5..10)));
 /// }, || {
-///     sleep(Duration::from_millis(rng.gen_range(5..12)));
+///     sleep(Duration::from_millis(rng.random_range(5..12)));
 /// }; "some" => "tag");
 /// ```
 /// The above code will run the first block passed, and after execution,
