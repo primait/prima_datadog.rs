@@ -6,8 +6,8 @@ use crate::compare;
 
 #[test]
 fn test_macro() {
-    let mut rng = rand::thread_rng();
-    let path = rng.gen_range(0..2);
+    let mut rng = rand::rng();
+    let path = rng.random_range(0..2);
     let something = "test".to_string();
     // simple compare, no tags
     compare!("test", path, || {}, || {});
