@@ -47,12 +47,12 @@ impl Configuration {
     }
 
     pub fn with_environment(mut self, environment: Environment) -> Self {
-        self.tags.push(format!("env:{}", environment));
+        self.tags.push(format!("env:{environment}"));
         self
     }
 
     pub fn with_tag<T: Display>(mut self, key: &str, value: &T) -> Self {
-        self.tags.push(format!("{}:{}", key, value));
+        self.tags.push(format!("{key}:{value}"));
         self
     }
 
@@ -120,16 +120,16 @@ impl From<Configuration> for dogstatsd::Options {
 fn get_env_tags() -> Vec<String> {
     let mut tags = vec![];
     if let Ok(part_of) = std::env::var("KUBE_APP_PART_OF") {
-        tags.push(format!("kube_app_part_of:{}", part_of));
+        tags.push(format!("kube_app_part_of:{part_of}"));
     }
     if let Ok(managed_by) = std::env::var("KUBE_APP_MANAGED_BY") {
-        tags.push(format!("kube_app_managed_by:{}", managed_by));
+        tags.push(format!("kube_app_managed_by:{managed_by}"));
     }
     if let Ok(version) = std::env::var("KUBE_APP_VERSION") {
-        tags.push(format!("kube_app_version:{}", version));
+        tags.push(format!("kube_app_version:{version}"));
     }
     if let Ok(instance) = std::env::var("KUBE_APP_INSTANCE") {
-        tags.push(format!("kube_app_instance:{}", instance));
+        tags.push(format!("kube_app_instance:{instance}"));
     }
     tags
 }

@@ -18,7 +18,7 @@ fn setup(_: &mut Criterion) {
 
 fn incr_benchmark(c: &mut Criterion) {
     // 20 test tags to simulate a normal to heavily tagged metric
-    let tags = (0..20).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
+    let tags = (0..20).map(|i| format!("tag_{i}")).collect::<Vec<_>>();
     c.bench_function("incr_benchmark", |b| {
         b.iter(|| {
             // Note: clone here is ok since we only care about /relative/ perf here
@@ -28,7 +28,7 @@ fn incr_benchmark(c: &mut Criterion) {
 }
 
 fn incr_with_too_many_tags(c: &mut Criterion) {
-    let tags = (0..22).map(|i| format!("tag_{}", i)).collect::<Vec<_>>();
+    let tags = (0..22).map(|i| format!("tag_{i}")).collect::<Vec<_>>();
     c.bench_function("incr_with_too_many_tags", |b| {
         b.iter(|| {
             Datadog::incr("test", tags.clone());
