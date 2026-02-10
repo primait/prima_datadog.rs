@@ -1,6 +1,6 @@
 use std::thread;
 
-use rand::Rng;
+use rand::RngExt;
 
 use crate::compare;
 
