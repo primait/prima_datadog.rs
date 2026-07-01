@@ -1,4 +1,4 @@
-FROM rust:1.88.0
+FROM rust:1.96.1
 
 WORKDIR /code
 
